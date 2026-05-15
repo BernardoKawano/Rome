@@ -1,47 +1,36 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { NextFetchEvent, NextRequest } from "next/server";
-import { isAppAuthConfigured } from "@/lib/app-auth-config";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
+import type { NextRequest } from "next/server";
+import { isGoogleAuthConfigured } from "@/lib/google-config";
+import { GOOGLE_SESSION_COOKIE } from "@/lib/google-session";
+import { verifySessionPayload } from "@/lib/session-crypto";
 
-const isPublicRoute = createRouteMatcher([
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/login",
-  "/api/auth/login",
-]);
+const PUBLIC_PREFIXES = ["/login", "/api/auth/google", "/api/auth/google/callback"];
 
-const clerkHandler = clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect();
-  }
-});
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
 
-async function appAuthMiddleware(request: NextRequest): Promise<NextResponse> {
-  if (isPublicRoute(request)) {
+export async function middleware(request: NextRequest) {
+  if (isPublicPath(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  const userId = await verifySessionToken(token);
-  if (!userId) {
+
+  if (!isGoogleAuthConfigured()) {
+    if (process.env.NODE_ENV === "development") {
+      return NextResponse.next();
+    }
+    const login = new URL("/login", request.url);
+    login.searchParams.set("error", "config");
+    return NextResponse.redirect(login);
+  }
+
+  const token = request.cookies.get(GOOGLE_SESSION_COOKIE)?.value;
+  const session = token ? await verifySessionPayload(token) : null;
+  const wire = session as { accessToken?: string } | null;
+  if (!wire?.accessToken) {
     const login = new URL("/login", request.url);
     login.searchParams.set("from", request.nextUrl.pathname);
     return NextResponse.redirect(login);
-  }
-  return NextResponse.next();
-}
-
-export default async function middleware(request: NextRequest, event: NextFetchEvent) {
-  const hasClerk =
-    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim()) &&
-    Boolean(process.env.CLERK_SECRET_KEY?.trim());
-
-  if (hasClerk) {
-    return clerkHandler(request, event);
-  }
-
-  if (isAppAuthConfigured()) {
-    return appAuthMiddleware(request);
   }
 
   return NextResponse.next();

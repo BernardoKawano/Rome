@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { clearSessionCookie } from "@/lib/session";
+import { clearGoogleSessionCookie } from "@/lib/google-session";
 
 export async function POST() {
-  await clearSessionCookie();
+  await clearGoogleSessionCookie();
   return NextResponse.json({ ok: true });
 }

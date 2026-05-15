@@ -23,7 +23,7 @@ async function hmacSha256Base64Url(message: string): Promise<string> {
   return Buffer.from(sig).toString("base64url");
 }
 
-export type SessionPayload = { sub: string; exp: number };
+export type SessionPayload = { sub: string; exp: number; [key: string]: unknown };
 
 export async function signSessionPayload(payload: SessionPayload): Promise<string> {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");

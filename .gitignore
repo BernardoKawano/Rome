@@ -18,6 +18,9 @@
 # production
 /build
 
+# local board persistence (sem Vercel KV)
+.data/
+
 # misc
 .DS_Store
 *.pem

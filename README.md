@@ -1,11 +1,25 @@
 # Demandas — Kanban minimalista
 
-Next.js (App Router), TypeScript, Tailwind CSS v4, autenticação [Clerk](https://clerk.com) e persistência [Vercel KV](https://vercel.com/docs/storage/vercel-kv). Interface monocromática: prioridade por arraste, detalhe sob expansão do cartão, registo de conclusões com data.
+Next.js, TypeScript, Tailwind CSS v4. **Login com Google** e tabuleiro guardado no ficheiro `demandas-kanban.json` no **Google Drive** de cada utilizador (sem Clerk, sem base de dados).
 
-## Requisitos
+## Como funciona
 
-- Node.js 20+
-- Conta Clerk e base KV ligada ao projeto na Vercel (em desenvolvimento pode omitir `KV_*` — os dados ficam só em memória do servidor Node).
+1. Entra com Google → a app pede acesso ao Drive (só ficheiros que ela criar).
+2. Cria ou atualiza `demandas-kanban.json` na sua conta.
+3. Ao voltar (mesmo noutro PC), os dados vêm desse ficheiro.
+4. Cópia de segurança no browser (`localStorage`) se o Drive falhar temporariamente.
+
+## Configurar Google Cloud
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → novo projeto.
+2. **APIs e serviços → Biblioteca** → ativar **Google Drive API**.
+3. **APIs e serviços → Credenciais → Criar credenciais → ID do cliente OAuth**:
+   - Tipo: **Aplicação Web**
+   - URIs de redirecionamento autorizados:
+     - `http://localhost:3000/api/auth/google/callback` (dev)
+     - `https://SEU-DOMINIO.vercel.app/api/auth/google/callback` (produção)
+4. **Ecrã de consentimento OAuth** → adicionar utilizadores de teste (modo teste) ou publicar a app.
+5. Copie **Client ID** e **Client Secret**.
 
 ## Variáveis de ambiente
 
@@ -13,12 +27,12 @@ Copie `.env.example` para `.env.local`:
 
 | Variável | Descrição |
 |----------|-----------|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Chave pública Clerk |
-| `CLERK_SECRET_KEY` | Chave secreta Clerk |
-| `KV_REST_API_URL` | URL REST do KV (dashboard Vercel) |
-| `KV_REST_API_TOKEN` | Token REST do KV |
+| `GOOGLE_CLIENT_ID` | Client ID OAuth |
+| `GOOGLE_CLIENT_SECRET` | Client Secret |
+| `GOOGLE_REDIRECT_URI` | Callback (ex.: `http://localhost:3000/api/auth/google/callback`) |
+| `AUTH_SESSION_SECRET` | String aleatória longa (cookies de sessão) |
 
-Opcional: `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`.
+Remova variáveis antigas (`CLERK_*`, `APP_AUTH_*`, `KV_*`) se ainda existirem.
 
 ## Comandos
 
@@ -27,20 +41,20 @@ npm install
 npm run dev
 ```
 
+Abra http://localhost:3000 → **Entrar com Google**.
+
 ```bash
-npm run lint
 npm run test
 npm run build
 ```
 
 ## Deploy na Vercel
 
-1. Push do código para um repositório Git e importação na Vercel.
-2. **Storage** → criar **KV** e associar ao projeto (envs `KV_REST_API_URL` e `KV_REST_API_TOKEN`).
-3. **Settings → Environment Variables**: chaves Clerk em Production e Preview.
-4. Deploy. Rotas `/` e `/api/board` exigem sessão (middleware Clerk).
+1. Push para Git e importar na Vercel.
+2. Environment Variables: as quatro variáveis acima (redirect URI com o domínio Vercel).
+3. No Google Cloud, adicione o redirect URI de produção.
+4. Deploy.
 
 ## Changelog
 
 Ver `CHANGELOG.md`.
-

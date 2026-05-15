@@ -1,27 +1,28 @@
-import { auth } from "@clerk/nextjs/server";
-import { isAppAuthConfigured } from "@/lib/app-auth-config";
-import { isClerkConfigured } from "@/lib/clerk-config";
-import { getSessionUserIdFromCookies } from "@/lib/session";
+import { isGoogleAuthConfigured } from "@/lib/google-config";
+import { getGoogleSessionFromCookies } from "@/lib/google-session";
 
-/** Utilizador autenticado para API e persistência do tabuleiro. */
+export type AuthMode = "google" | "dev";
+
 export async function getAuthUserId(): Promise<string | null> {
-  if (isClerkConfigured()) {
-    const { userId } = await auth();
-    return userId;
-  }
-  if (isAppAuthConfigured()) {
-    return getSessionUserIdFromCookies();
-  }
-  if (process.env.NODE_ENV === "development") {
+  const google = await getGoogleSessionFromCookies();
+  if (google) return `google:${google.sub}`;
+  if (process.env.NODE_ENV === "development" && !isGoogleAuthConfigured()) {
     return "local-dev";
   }
   return null;
 }
 
-export type AuthMode = "clerk" | "app" | "dev";
-
 export function getAuthMode(): AuthMode {
-  if (isClerkConfigured()) return "clerk";
-  if (isAppAuthConfigured()) return "app";
+  if (isGoogleAuthConfigured()) return "google";
   return "dev";
+}
+
+export async function getAuthProfile(): Promise<{ userId: string; email?: string; name?: string } | null> {
+  const google = await getGoogleSessionFromCookies();
+  if (google) {
+    return { userId: `google:${google.sub}`, email: google.email, name: google.name };
+  }
+  const userId = await getAuthUserId();
+  if (!userId) return null;
+  return { userId };
 }

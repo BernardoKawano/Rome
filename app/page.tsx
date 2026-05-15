@@ -1,14 +1,14 @@
 import { BoardPage } from "@/components/BoardPage";
 import { getAuthMode, getAuthUserId } from "@/lib/auth";
+import { isGoogleAuthConfigured } from "@/lib/google-config";
 import { redirect } from "next/navigation";
 
 export default async function Home() {
-  const mode = getAuthMode();
   const userId = await getAuthUserId();
 
-  if ((mode === "clerk" || mode === "app") && !userId) {
-    redirect(mode === "clerk" ? "/sign-in" : "/login");
+  if (isGoogleAuthConfigured() && !userId) {
+    redirect("/login");
   }
 
-  return <BoardPage authMode={mode} />;
+  return <BoardPage authMode={getAuthMode()} />;
 }
