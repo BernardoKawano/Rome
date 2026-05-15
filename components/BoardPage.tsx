@@ -6,7 +6,6 @@ import { applyCompletionOnMove, findColumnForCard, moveCardBetweenColumns } from
 import { mergeBoardSources, readLocalBoard, writeLocalBoard } from "@/lib/board-local-cache";
 import type { BoardState, Card, ColumnId } from "@/lib/board-schema";
 import { COLUMN_IDS, createCard, newId } from "@/lib/board-schema";
-import type { AuthMode } from "@/lib/auth";
 import {
   closestCorners,
   DndContext,
@@ -35,7 +34,7 @@ function LogoutButton({ onBeforeLogout }: { onBeforeLogout: () => Promise<void> 
   );
 }
 
-export function BoardPage(_props: { authMode: AuthMode }) {
+export function BoardPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [board, setBoard] = useState<BoardState | null>(null);
   const [userId, setUserId] = useState<string | null>(null);

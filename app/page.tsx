@@ -1,5 +1,5 @@
 import { BoardPage } from "@/components/BoardPage";
-import { getAuthMode, getAuthUserId } from "@/lib/auth";
+import { getAuthUserId } from "@/lib/auth";
 import { isGoogleAuthConfigured } from "@/lib/google-config";
 import { redirect } from "next/navigation";
 
@@ -10,5 +10,5 @@ export default async function Home() {
     redirect("/login");
   }
 
-  return <BoardPage authMode={getAuthMode()} />;
+  return <BoardPage />;
 }
