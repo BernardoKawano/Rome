@@ -11,8 +11,11 @@ export const metadata: Metadata = {
   title: "Demandas",
   description: "Kanban minimalista com Google Drive",
   icons: {
-    icon: [{ url: "/icon/icon.png", type: "image/png" }],
-    apple: "/icon/icon.png",
+    icon: [
+      { url: "/icon/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/icon/icon-192.png", sizes: "192x192", type: "image/png" }],
   },
 };
 

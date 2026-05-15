@@ -288,7 +288,7 @@ export function BoardPage() {
   if (!board) {
     return (
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-24 text-center text-sm text-neutral-400">
-        <AppIcon size={40} />
+        <AppIcon size={56} />
         <p>A carregar…</p>
       </div>
     );
@@ -302,7 +302,7 @@ export function BoardPage() {
       <header className="flex flex-col gap-6 border-b border-neutral-200 pb-8 sm:flex-row sm:items-end sm:justify-between">
         <BrandMark
           layout="horizontal"
-          iconSize={52}
+          iconSize={72}
           title="Demandas"
           subtitle={
             <>

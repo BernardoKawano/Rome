@@ -10,7 +10,7 @@ type BrandMarkProps = {
 };
 
 export function BrandMark({
-  iconSize = 72,
+  iconSize = 80,
   title = "Demandas",
   subtitle,
   layout = "vertical",

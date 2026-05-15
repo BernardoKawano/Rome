@@ -13,7 +13,7 @@ export default function LoginClient({
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--background)] px-4 py-12">
       <div className="w-full max-w-sm border border-neutral-200 bg-white p-8 shadow-sm">
         <BrandMark
-          iconSize={88}
+          iconSize={120}
           title="Demandas"
           subtitle={
             <>
