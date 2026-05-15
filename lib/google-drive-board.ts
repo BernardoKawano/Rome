@@ -14,6 +14,8 @@ export type GoogleBoardReadResult = {
   session: GoogleSession;
 };
 
+const DRIVE_FILE_QUERY = `name='${GOOGLE_BOARD_FILENAME}' and trashed=false and 'appDataFolder' in parents`;
+
 function createOAuthClient(session: GoogleSession) {
   const client = new google.auth.OAuth2(googleClientId(), googleClientSecret(), googleRedirectUri());
   client.setCredentials({
@@ -35,9 +37,16 @@ async function ensureFreshTokens(session: GoogleSession): Promise<GoogleSession>
   };
 }
 
+function driveErrorMessage(err: unknown): string {
+  if (err && typeof err === "object" && "message" in err) {
+    return String((err as { message: string }).message);
+  }
+  return "Erro desconhecido no Google Drive";
+}
+
 async function findBoardFileId(drive: ReturnType<typeof google.drive>): Promise<string | null> {
   const res = await drive.files.list({
-    q: `name='${GOOGLE_BOARD_FILENAME}' and trashed=false`,
+    q: DRIVE_FILE_QUERY,
     fields: "files(id,name)",
     pageSize: 1,
     spaces: "drive",
@@ -47,7 +56,11 @@ async function findBoardFileId(drive: ReturnType<typeof google.drive>): Promise<
 
 async function createBoardFile(drive: ReturnType<typeof google.drive>, initialJson: string): Promise<string> {
   const res = await drive.files.create({
-    requestBody: { name: GOOGLE_BOARD_FILENAME, mimeType: GOOGLE_BOARD_MIME },
+    requestBody: {
+      name: GOOGLE_BOARD_FILENAME,
+      mimeType: GOOGLE_BOARD_MIME,
+      parents: ["appDataFolder"],
+    },
     media: { mimeType: GOOGLE_BOARD_MIME, body: initialJson },
     fields: "id",
   });
@@ -56,45 +69,55 @@ async function createBoardFile(drive: ReturnType<typeof google.drive>, initialJs
   return id;
 }
 
+async function readFileContent(drive: ReturnType<typeof google.drive>, fileId: string): Promise<unknown> {
+  const res = await drive.files.get(
+    { fileId, alt: "media" },
+    { responseType: "arraybuffer" }
+  );
+  const buf = res.data as ArrayBuffer;
+  const text = Buffer.from(buf).toString("utf-8");
+  if (!text.trim()) return null;
+  return JSON.parse(text) as unknown;
+}
+
 export async function readBoardFromGoogleDrive(session: GoogleSession): Promise<GoogleBoardReadResult> {
   let current = await ensureFreshTokens(session);
   const auth = createOAuthClient(current);
   const drive = google.drive({ version: "v3", auth });
 
-  const fileId = current.driveFileId ?? (await findBoardFileId(drive));
+  let fileId = current.driveFileId ?? (await findBoardFileId(drive));
   if (!fileId) {
     return { data: null, session: current };
   }
 
   try {
-    const res = await drive.files.get({ fileId, alt: "media" }, { responseType: "text" });
-    const text = typeof res.data === "string" ? res.data : JSON.stringify(res.data);
-    const data = JSON.parse(text) as unknown;
+    const data = await readFileContent(drive, fileId);
     current = { ...current, driveFileId: fileId };
     return { data, session: current };
-  } catch {
-    return { data: null, session: { ...current, driveFileId: fileId } };
+  } catch (err) {
+    throw new Error(`Não foi possível ler o ficheiro no Drive: ${driveErrorMessage(err)}`);
   }
 }
 
-export async function writeBoardToGoogleDrive(
-  session: GoogleSession,
-  data: unknown
-): Promise<GoogleSession> {
-  const current = await ensureFreshTokens(session);
+export async function writeBoardToGoogleDrive(session: GoogleSession, data: unknown): Promise<GoogleSession> {
+  let current = await ensureFreshTokens(session);
   const auth = createOAuthClient(current);
   const drive = google.drive({ version: "v3", auth });
   const body = JSON.stringify(data);
 
-  let fileId = current.driveFileId ?? (await findBoardFileId(drive));
-  if (!fileId) {
-    fileId = await createBoardFile(drive, body);
-    return { ...current, driveFileId: fileId };
-  }
+  try {
+    let fileId = current.driveFileId ?? (await findBoardFileId(drive));
+    if (!fileId) {
+      fileId = await createBoardFile(drive, body);
+      return { ...current, driveFileId: fileId };
+    }
 
-  await drive.files.update({
-    fileId,
-    media: { mimeType: GOOGLE_BOARD_MIME, body },
-  });
-  return { ...current, driveFileId: fileId };
+    await drive.files.update({
+      fileId,
+      media: { mimeType: GOOGLE_BOARD_MIME, body },
+    });
+    return { ...current, driveFileId: fileId };
+  } catch (err) {
+    throw new Error(`Não foi possível guardar no Drive: ${driveErrorMessage(err)}`);
+  }
 }

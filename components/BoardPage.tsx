@@ -96,8 +96,12 @@ export function BoardPage() {
         const uid = profile.userId;
 
         const boardRes = await fetch("/api/board");
-        if (!boardRes.ok) throw new Error("Falha ao carregar");
-        const serverBoard = (await boardRes.json()) as BoardState;
+        const boardJson = (await boardRes.json()) as BoardState & { error?: string };
+        if (!boardRes.ok && !boardJson.version) {
+          throw new Error(boardJson.error ?? "Falha ao carregar");
+        }
+        const serverBoard = boardJson as BoardState;
+        const driveWarning = boardRes.headers.get("X-Board-Warning");
         const localBoard = readLocalBoard(uid);
         const merged = mergeBoardSources(serverBoard, localBoard);
 
@@ -106,6 +110,11 @@ export function BoardPage() {
           setUserEmail(profile.email ?? null);
           setBoard(merged);
           writeLocalBoard(uid, merged);
+          if (driveWarning) {
+            setError(
+              "Tabuleiro iniciado vazio. Ative a Google Drive API no Cloud Console ou tente guardar de novo."
+            );
+          }
           skipPersistRef.current = true;
           if (merged !== serverBoard) {
             void persistBoard(merged, uid);

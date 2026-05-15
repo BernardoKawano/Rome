@@ -13,7 +13,11 @@ export async function GET() {
     const { data: raw } = await readBoardForSession();
     if (raw == null) {
       const initial = createDefaultBoard();
-      await writeBoardForSession(initial);
+      try {
+        await writeBoardForSession(initial);
+      } catch (writeErr) {
+        console.error("[board] falha ao criar ficheiro no Drive:", writeErr);
+      }
       return NextResponse.json(initial);
     }
 
@@ -35,7 +39,11 @@ export async function GET() {
     return NextResponse.json(parsed.data);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Erro ao ler tabuleiro";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[board] GET:", message);
+    const initial = createDefaultBoard();
+    return NextResponse.json(initial, {
+      headers: { "X-Board-Warning": message.slice(0, 200) },
+    });
   }
 }
 
