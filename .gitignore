@@ -41,3 +41,4 @@ next-env.d.ts
 
 # local portable node
 /.tools/
+.vercel

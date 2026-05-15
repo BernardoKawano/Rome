@@ -1,18 +1,11 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getAuthUserId } from "@/lib/auth";
 import { assertBoardIntegrity } from "@/lib/board-operations";
 import { createDefaultBoard, safeParseBoardState } from "@/lib/board-schema";
-import { isClerkConfigured } from "@/lib/clerk-config";
 import { readBoard, writeBoard } from "@/lib/kv";
 
 async function resolveUserId(): Promise<string | NextResponse> {
-  if (!isClerkConfigured()) {
-    if (process.env.NODE_ENV === "production") {
-      return NextResponse.json({ error: "Clerk não configurado" }, { status: 503 });
-    }
-    return "local-dev";
-  }
-  const { userId } = await auth();
+  const userId = await getAuthUserId();
   if (!userId) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }

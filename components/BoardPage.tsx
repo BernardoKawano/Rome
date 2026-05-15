@@ -5,6 +5,7 @@ import { KanbanColumn } from "@/components/KanbanColumn";
 import { applyCompletionOnMove, findColumnForCard, moveCardBetweenColumns } from "@/lib/board-operations";
 import type { BoardState, Card, ColumnId } from "@/lib/board-schema";
 import { COLUMN_IDS, createCard, newId } from "@/lib/board-schema";
+import type { AuthMode } from "@/lib/auth";
 import { UserButton } from "@clerk/nextjs";
 import {
   closestCorners,
@@ -18,7 +19,22 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export function BoardPage() {
+function LogoutButton() {
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        window.location.href = "/login";
+      }}
+      className="border border-neutral-300 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-neutral-700 hover:border-neutral-900 hover:text-neutral-900"
+    >
+      Sair
+    </button>
+  );
+}
+
+export function BoardPage({ authMode }: { authMode: AuthMode }) {
   const [board, setBoard] = useState<BoardState | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -207,9 +223,8 @@ export function BoardPage() {
           </p>
         </div>
         <div className="self-end sm:self-auto">
-          {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? (
-            <UserButton afterSignOutUrl="/sign-in" />
-          ) : null}
+          {authMode === "clerk" ? <UserButton afterSignOutUrl="/sign-in" /> : null}
+          {authMode === "app" ? <LogoutButton /> : null}
         </div>
       </header>
 
