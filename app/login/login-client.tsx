@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandMark } from "@/components/BrandMark";
+
 export default function LoginClient({
   googleReady,
   errorMessage,
@@ -8,15 +10,21 @@ export default function LoginClient({
   errorMessage: string | null;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4">
-      <div className="w-full max-w-sm border border-neutral-200 bg-white p-8 shadow-sm text-center">
-        <h1 className="text-2xl font-medium tracking-tight text-neutral-950">Demandas</h1>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-          O seu tabuleiro fica num ficheiro <strong className="font-medium">demandas-kanban.json</strong> no
-          Google Drive da sua conta.
-        </p>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--background)] px-4 py-12">
+      <div className="w-full max-w-sm border border-neutral-200 bg-white p-8 shadow-sm">
+        <BrandMark
+          iconSize={88}
+          title="Demandas"
+          subtitle={
+            <>
+              O seu tabuleiro fica no ficheiro{" "}
+              <strong className="font-medium text-neutral-700">demandas-kanban.json</strong> no Google Drive
+              da sua conta.
+            </>
+          }
+        />
 
-        {errorMessage ? <p className="mt-4 text-sm text-red-600">{errorMessage}</p> : null}
+        {errorMessage ? <p className="mt-6 text-center text-sm text-red-600">{errorMessage}</p> : null}
 
         {googleReady ? (
           <a
@@ -27,11 +35,11 @@ export default function LoginClient({
             Entrar com Google
           </a>
         ) : (
-          <p className="mt-8 text-xs text-neutral-500">
+          <p className="mt-8 text-center text-xs text-neutral-500">
             Configure <code className="font-mono">GOOGLE_CLIENT_ID</code>,{" "}
             <code className="font-mono">GOOGLE_CLIENT_SECRET</code> e{" "}
-            <code className="font-mono">AUTH_SESSION_SECRET</code> nas variáveis de ambiente da Vercel
-            (Settings → Environment Variables) e faça redeploy.
+            <code className="font-mono">AUTH_SESSION_SECRET</code> nas variáveis de ambiente da Vercel e faça
+            redeploy.
           </p>
         )}
       </div>

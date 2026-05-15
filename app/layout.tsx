@@ -10,6 +10,10 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Demandas",
   description: "Kanban minimalista com Google Drive",
+  icons: {
+    icon: [{ url: "/icon/icon.png", type: "image/png" }],
+    apple: "/icon/icon.png",
+  },
 };
 
 export default function RootLayout({

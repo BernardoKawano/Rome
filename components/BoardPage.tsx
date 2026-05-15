@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandMark } from "@/components/BrandMark";
+import { AppIcon } from "@/components/AppIcon";
 import { CompletedLog } from "@/components/CompletedLog";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { applyCompletionOnMove, findColumnForCard, moveCardBetweenColumns } from "@/lib/board-operations";
@@ -285,8 +287,9 @@ export function BoardPage() {
 
   if (!board) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-24 text-center text-sm text-neutral-400">
-        A carregar…
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-24 text-center text-sm text-neutral-400">
+        <AppIcon size={40} />
+        <p>A carregar…</p>
       </div>
     );
   }
@@ -297,13 +300,22 @@ export function BoardPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-12">
       <header className="flex flex-col gap-6 border-b border-neutral-200 pb-8 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-medium tracking-tight text-neutral-950">Demandas</h1>
-          <p className="mt-2 max-w-md text-sm leading-relaxed text-neutral-500">
-            Arraste para definir prioridade. Expanda um cartão só quando precisar de detalhe.
-          </p>
-          {saveLabel ? <p className="mt-1 text-[11px] uppercase tracking-wide text-neutral-400">{saveLabel}</p> : null}
-        </div>
+        <BrandMark
+          layout="horizontal"
+          iconSize={52}
+          title="Demandas"
+          subtitle={
+            <>
+              Arraste para definir prioridade. Expanda um cartão só quando precisar de detalhe.
+              {saveLabel ? (
+                <span className="mt-2 block text-[11px] uppercase tracking-wide text-neutral-400">
+                  {saveLabel}
+                </span>
+              ) : null}
+            </>
+          }
+          className="items-end sm:items-end"
+        />
         <div className="flex flex-col items-end gap-2 self-end sm:self-auto">
           {userEmail ? <span className="text-xs text-neutral-500">{userEmail}</span> : null}
           <LogoutButton onBeforeLogout={flushBoard} />
