@@ -1,7 +1,5 @@
 "use client";
 
-import { BrandMark } from "@/components/BrandMark";
-import { AppIcon } from "@/components/AppIcon";
 import { CompletedLog } from "@/components/CompletedLog";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { applyCompletionOnMove, findColumnForCard, moveCardBetweenColumns } from "@/lib/board-operations";
@@ -64,14 +62,18 @@ export function BoardPage() {
         body: JSON.stringify(state),
       });
       if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        const detail = typeof payload.error === "string" ? payload.error : null;
         setSaveState("error");
-        setError("Falha ao guardar no Google Drive. Os dados ficam neste browser até sincronizar.");
+        setError(
+          detail
+            ? `Não foi possível guardar no Google Drive: ${detail}`
+            : "Falha ao guardar no Google Drive. Os dados ficam neste browser até sincronizar."
+        );
         return false;
       }
       setSaveState("saved");
-      setError((prev) =>
-        prev === "Falha ao guardar no Google Drive. Os dados ficam neste browser até sincronizar." ? null : prev
-      );
+      setError((prev) => (prev?.includes("Google Drive") ? null : prev));
       return true;
     } catch {
       setSaveState("error");
@@ -287,8 +289,7 @@ export function BoardPage() {
 
   if (!board) {
     return (
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-24 text-center text-sm text-neutral-400">
-        <AppIcon size={56} />
+      <div className="mx-auto max-w-6xl px-6 py-24 text-center text-sm text-neutral-400">
         <p>A carregar…</p>
       </div>
     );
@@ -300,22 +301,15 @@ export function BoardPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-12">
       <header className="flex flex-col gap-6 border-b border-neutral-200 pb-8 sm:flex-row sm:items-end sm:justify-between">
-        <BrandMark
-          layout="horizontal"
-          iconSize={72}
-          title="Demandas"
-          subtitle={
-            <>
-              Arraste para definir prioridade. Expanda um cartão só quando precisar de detalhe.
-              {saveLabel ? (
-                <span className="mt-2 block text-[11px] uppercase tracking-wide text-neutral-400">
-                  {saveLabel}
-                </span>
-              ) : null}
-            </>
-          }
-          className="items-end sm:items-end"
-        />
+        <div className="min-w-0">
+          <h1 className="text-2xl font-medium tracking-tight text-neutral-950 sm:text-3xl">Demandas</h1>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+            Arraste para definir prioridade. Expanda um cartão só quando precisar de detalhe.
+            {saveLabel ? (
+              <span className="mt-2 block text-[11px] uppercase tracking-wide text-neutral-400">{saveLabel}</span>
+            ) : null}
+          </p>
+        </div>
         <div className="flex flex-col items-end gap-2 self-end sm:self-auto">
           {userEmail ? <span className="text-xs text-neutral-500">{userEmail}</span> : null}
           <LogoutButton onBeforeLogout={flushBoard} />

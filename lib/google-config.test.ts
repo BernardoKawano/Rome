@@ -1,5 +1,5 @@
 import { describe, expect, it, afterEach } from "vitest";
-import { GOOGLE_BOARD_FILENAME, isGoogleAuthConfigured } from "./google-config";
+import { GOOGLE_BOARD_FILENAME, GOOGLE_DRIVE_FILE_QUERY, isGoogleAuthConfigured } from "./google-config";
 
 describe("google-config", () => {
   const env = { ...process.env };
@@ -23,5 +23,10 @@ describe("google-config", () => {
 
   it("nome do ficheiro no Drive é fixo", () => {
     expect(GOOGLE_BOARD_FILENAME).toBe("demandas-kanban.json");
+  });
+
+  it("query do Drive não usa appDataFolder", () => {
+    expect(GOOGLE_DRIVE_FILE_QUERY).toContain(GOOGLE_BOARD_FILENAME);
+    expect(GOOGLE_DRIVE_FILE_QUERY).not.toContain("appDataFolder");
   });
 });

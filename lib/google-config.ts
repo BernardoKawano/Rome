@@ -1,6 +1,9 @@
 export const GOOGLE_BOARD_FILENAME = "demandas-kanban.json";
 export const GOOGLE_BOARD_MIME = "application/json";
 
+/** Lista o ficheiro no Drive do utilizador (scope drive.file; não usar appDataFolder). */
+export const GOOGLE_DRIVE_FILE_QUERY = `name='${GOOGLE_BOARD_FILENAME}' and trashed=false`;
+
 function hasRedirectUri(): boolean {
   return Boolean(process.env.GOOGLE_REDIRECT_URI?.trim() || process.env.VERCEL_URL?.trim());
 }

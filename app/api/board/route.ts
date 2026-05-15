@@ -77,6 +77,7 @@ export async function PUT(req: Request) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Erro ao guardar";
+    console.error("[board] PUT:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
