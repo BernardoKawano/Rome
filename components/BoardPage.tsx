@@ -35,7 +35,7 @@ function LogoutButton({ onBeforeLogout }: { onBeforeLogout: () => Promise<void> 
   );
 }
 
-export function BoardPage({ authMode }: { authMode: AuthMode }) {
+export function BoardPage(_props: { authMode: AuthMode }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [board, setBoard] = useState<BoardState | null>(null);
   const [userId, setUserId] = useState<string | null>(null);

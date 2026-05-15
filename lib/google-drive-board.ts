@@ -61,7 +61,7 @@ export async function readBoardFromGoogleDrive(session: GoogleSession): Promise<
   const auth = createOAuthClient(current);
   const drive = google.drive({ version: "v3", auth });
 
-  let fileId = current.driveFileId ?? (await findBoardFileId(drive));
+  const fileId = current.driveFileId ?? (await findBoardFileId(drive));
   if (!fileId) {
     return { data: null, session: current };
   }
@@ -81,7 +81,7 @@ export async function writeBoardToGoogleDrive(
   session: GoogleSession,
   data: unknown
 ): Promise<GoogleSession> {
-  let current = await ensureFreshTokens(session);
+  const current = await ensureFreshTokens(session);
   const auth = createOAuthClient(current);
   const drive = google.drive({ version: "v3", auth });
   const body = JSON.stringify(data);

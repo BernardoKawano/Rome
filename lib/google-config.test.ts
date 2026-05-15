@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, afterEach } from "vitest";
 import { GOOGLE_BOARD_FILENAME, isGoogleAuthConfigured } from "./google-config";
 
 describe("google-config", () => {
