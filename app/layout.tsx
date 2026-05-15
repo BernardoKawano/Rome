@@ -22,10 +22,19 @@ export default function RootLayout({
       <body className={`${geistSans.className} min-h-screen antialiased`}>
         {!isGoogleAuthConfigured() ? (
           <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs text-amber-900">
-            Defina <code className="font-mono">GOOGLE_CLIENT_ID</code>,{" "}
-            <code className="font-mono">GOOGLE_CLIENT_SECRET</code> e{" "}
-            <code className="font-mono">GOOGLE_REDIRECT_URI</code> em{" "}
-            <code className="font-mono">.env.local</code>.
+            {process.env.VERCEL ? (
+              <>
+                Configure <code className="font-mono">GOOGLE_CLIENT_ID</code>,{" "}
+                <code className="font-mono">GOOGLE_CLIENT_SECRET</code> e{" "}
+                <code className="font-mono">AUTH_SESSION_SECRET</code> na Vercel e faça redeploy.
+              </>
+            ) : (
+              <>
+                Defina <code className="font-mono">GOOGLE_CLIENT_ID</code> e{" "}
+                <code className="font-mono">GOOGLE_CLIENT_SECRET</code> em{" "}
+                <code className="font-mono">.env.local</code>.
+              </>
+            )}
           </div>
         ) : null}
         {children}

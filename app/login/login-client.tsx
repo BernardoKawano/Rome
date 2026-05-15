@@ -28,7 +28,10 @@ export default function LoginClient({
           </a>
         ) : (
           <p className="mt-8 text-xs text-neutral-500">
-            Defina as variáveis Google em <code className="font-mono">.env.local</code> e reinicie o servidor.
+            Configure <code className="font-mono">GOOGLE_CLIENT_ID</code>,{" "}
+            <code className="font-mono">GOOGLE_CLIENT_SECRET</code> e{" "}
+            <code className="font-mono">AUTH_SESSION_SECRET</code> nas variáveis de ambiente da Vercel
+            (Settings → Environment Variables) e faça redeploy.
           </p>
         )}
       </div>
