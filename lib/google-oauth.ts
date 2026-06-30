@@ -52,6 +52,14 @@ export async function exchangeGoogleCode(code: string): Promise<GoogleTokenRespo
   return (await res.json()) as GoogleTokenResponse;
 }
 
+/** Refresh token inválido/revogado (ex: app em modo "Testing" expira ao fim de 7 dias). */
+export class GoogleReauthRequiredError extends Error {
+  constructor() {
+    super("Sessão Google expirada, é necessário iniciar sessão novamente");
+    this.name = "GoogleReauthRequiredError";
+  }
+}
+
 export async function refreshGoogleAccessToken(refreshToken: string): Promise<GoogleTokenResponse> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -64,6 +72,9 @@ export async function refreshGoogleAccessToken(refreshToken: string): Promise<Go
     }),
   });
   if (!res.ok) {
+    if (res.status === 400 || res.status === 401) {
+      throw new GoogleReauthRequiredError();
+    }
     throw new Error(`Falha ao renovar token Google: ${res.status}`);
   }
   return (await res.json()) as GoogleTokenResponse;

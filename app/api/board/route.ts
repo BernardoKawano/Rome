@@ -3,6 +3,7 @@ import { getAuthUserId } from "@/lib/auth";
 import { readBoardForSession, writeBoardForSession } from "@/lib/board-storage";
 import { assertBoardIntegrity } from "@/lib/board-operations";
 import { createDefaultBoard, safeParseBoardState } from "@/lib/board-schema";
+import { GoogleReauthRequiredError } from "@/lib/google-oauth";
 export async function GET() {
   const userId = await getAuthUserId();
   if (!userId) {
@@ -38,6 +39,9 @@ export async function GET() {
 
     return NextResponse.json(parsed.data);
   } catch (e) {
+    if (e instanceof GoogleReauthRequiredError) {
+      return NextResponse.json({ error: e.message }, { status: 401 });
+    }
     const message = e instanceof Error ? e.message : "Erro ao ler tabuleiro";
     console.error("[board] GET:", message);
     const initial = createDefaultBoard();
@@ -76,6 +80,9 @@ export async function PUT(req: Request) {
     await writeBoardForSession(parsed.data);
     return NextResponse.json({ ok: true });
   } catch (e) {
+    if (e instanceof GoogleReauthRequiredError) {
+      return NextResponse.json({ error: e.message }, { status: 401 });
+    }
     const message = e instanceof Error ? e.message : "Erro ao guardar";
     console.error("[board] PUT:", message);
     return NextResponse.json({ error: message }, { status: 500 });

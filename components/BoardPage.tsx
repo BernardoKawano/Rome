@@ -61,6 +61,12 @@ export function BoardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(state),
       });
+      if (res.status === 401) {
+        setSaveState("error");
+        setError("Sessão Google expirada. A redirecionar para iniciar sessão novamente…");
+        window.location.href = "/login";
+        return false;
+      }
       if (!res.ok) {
         const payload = (await res.json().catch(() => ({}))) as { error?: string };
         const detail = typeof payload.error === "string" ? payload.error : null;
@@ -100,6 +106,10 @@ export function BoardPage() {
         const uid = profile.userId;
 
         const boardRes = await fetch("/api/board");
+        if (boardRes.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
         const boardJson = (await boardRes.json()) as BoardState & { error?: string };
         if (!boardRes.ok && !boardJson.version) {
           throw new Error(boardJson.error ?? "Falha ao carregar");

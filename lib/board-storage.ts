@@ -1,7 +1,9 @@
 import { readBoardFromFile, writeBoardToFile } from "@/lib/board-file-store";
 import { readBoardFromGoogleDrive, writeBoardToGoogleDrive } from "@/lib/google-drive-board";
 import { isGoogleAuthConfigured } from "@/lib/google-config";
+import { GoogleReauthRequiredError } from "@/lib/google-oauth";
 import {
+  clearGoogleSessionCookie,
   getGoogleSessionFromCookies,
   updateGoogleSessionCookie,
   type GoogleSession,
@@ -18,15 +20,22 @@ export async function readBoardForSession(): Promise<{
 }> {
   const googleSession = await getGoogleSessionFromCookies();
   if (googleSession) {
-    const { data, session } = await readBoardFromGoogleDrive(googleSession);
-    if (
-      session.accessToken !== googleSession.accessToken ||
-      session.accessTokenExp !== googleSession.accessTokenExp ||
-      session.driveFileId !== googleSession.driveFileId
-    ) {
-      await updateGoogleSessionCookie(session);
+    try {
+      const { data, session } = await readBoardFromGoogleDrive(googleSession);
+      if (
+        session.accessToken !== googleSession.accessToken ||
+        session.accessTokenExp !== googleSession.accessTokenExp ||
+        session.driveFileId !== googleSession.driveFileId
+      ) {
+        await updateGoogleSessionCookie(session);
+      }
+      return { data, userId: `google:${session.sub}` };
+    } catch (e) {
+      if (e instanceof GoogleReauthRequiredError) {
+        await clearGoogleSessionCookie();
+      }
+      throw e;
     }
-    return { data, userId: `google:${session.sub}` };
   }
 
   if (process.env.NODE_ENV === "development") {
@@ -40,15 +49,22 @@ export async function readBoardForSession(): Promise<{
 export async function writeBoardForSession(data: unknown): Promise<void> {
   const googleSession = await getGoogleSessionFromCookies();
   if (googleSession) {
-    const updated = await writeBoardToGoogleDrive(googleSession, data);
-    if (
-      updated.accessToken !== googleSession.accessToken ||
-      updated.accessTokenExp !== googleSession.accessTokenExp ||
-      updated.driveFileId !== googleSession.driveFileId
-    ) {
-      await updateGoogleSessionCookie(updated);
+    try {
+      const updated = await writeBoardToGoogleDrive(googleSession, data);
+      if (
+        updated.accessToken !== googleSession.accessToken ||
+        updated.accessTokenExp !== googleSession.accessTokenExp ||
+        updated.driveFileId !== googleSession.driveFileId
+      ) {
+        await updateGoogleSessionCookie(updated);
+      }
+      return;
+    } catch (e) {
+      if (e instanceof GoogleReauthRequiredError) {
+        await clearGoogleSessionCookie();
+      }
+      throw e;
     }
-    return;
   }
 
   if (process.env.NODE_ENV === "development") {
