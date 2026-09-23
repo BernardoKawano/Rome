@@ -7,8 +7,8 @@ import { KanbanCard } from "./KanbanCard";
 
 const LABELS: Record<ColumnId, string> = {
   todo: "A fazer",
-  doing: "Em curso",
-  done: "Feito",
+  doing: "Em progresso",
+  done: "Realizado",
 };
 
 type Props = {
@@ -20,6 +20,8 @@ type Props = {
   addSubItem: (cardId: string, title: string) => void;
   toggleSubItem: (cardId: string, subId: string) => void;
   removeSubItem: (cardId: string, subId: string) => void;
+  removeCard: (cardId: string) => void;
+  readOnly?: boolean;
 };
 
 export function KanbanColumn({
@@ -31,19 +33,21 @@ export function KanbanColumn({
   addSubItem,
   toggleSubItem,
   removeSubItem,
+  removeCard,
+  readOnly = false,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: `col:${columnId}` });
   const ids = state.columns[columnId];
 
   return (
-    <section className="flex min-h-[320px] flex-1 flex-col border border-neutral-200 bg-white">
-      <header className="border-b border-neutral-100 px-3 py-3">
+    <section className="flex h-[min(60dvh,28rem)] flex-col overflow-hidden border border-neutral-200 bg-white">
+      <header className="shrink-0 border-b border-neutral-100 px-3 py-3">
         <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">{LABELS[columnId]}</h2>
         <p className="mt-1 text-[11px] text-neutral-400">{ids.length} itens</p>
       </header>
       <div
         ref={setNodeRef}
-        className={`flex flex-1 flex-col gap-2 p-2 ${isOver ? "bg-neutral-50" : "bg-white"}`}
+        className={`min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-2 ${isOver ? "bg-neutral-50" : "bg-white"}`}
       >
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           <div className="flex flex-col gap-2">
@@ -60,6 +64,8 @@ export function KanbanColumn({
                   onAddSubItem={(title) => addSubItem(id, title)}
                   onToggleSub={(subId) => toggleSubItem(id, subId)}
                   onRemoveSub={(subId) => removeSubItem(id, subId)}
+                  onRemove={() => removeCard(id)}
+                  readOnly={readOnly}
                 />
               );
             })}

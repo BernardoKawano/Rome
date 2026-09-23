@@ -103,3 +103,19 @@ export function moveCardBetweenColumns(
     },
   };
 }
+
+/** Remove o cartão das colunas, do mapa e do registo de conclusões. */
+export function removeCard(state: BoardState, cardId: string): BoardState {
+  const cards = { ...state.cards };
+  delete cards[cardId];
+  return {
+    ...state,
+    columns: {
+      todo: state.columns.todo.filter((id) => id !== cardId),
+      doing: state.columns.doing.filter((id) => id !== cardId),
+      done: state.columns.done.filter((id) => id !== cardId),
+    },
+    cards,
+    completedLog: state.completedLog.filter((entry) => entry.id !== cardId),
+  };
+}

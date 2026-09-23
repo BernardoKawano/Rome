@@ -1,28 +1,23 @@
-import { isGoogleAuthConfigured } from "@/lib/google-config";
-import { getGoogleSessionFromCookies } from "@/lib/google-session";
+import type { Profile } from "@/lib/access";
+import { readAppSessionUserId } from "@/lib/app-session";
+import { getStore } from "@/lib/store";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type AuthMode = "google" | "dev";
+export async function getAuthProfile(): Promise<Profile | null> {
+  if (isSupabaseConfigured()) {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase.auth.getClaims();
+    if (error || !data?.claims?.sub) return null;
+    return getStore().getProfile(data.claims.sub);
+  }
+
+  const userId = await readAppSessionUserId();
+  if (!userId) return null;
+  return getStore().getProfile(userId);
+}
 
 export async function getAuthUserId(): Promise<string | null> {
-  const google = await getGoogleSessionFromCookies();
-  if (google) return `google:${google.sub}`;
-  if (process.env.NODE_ENV === "development" && !isGoogleAuthConfigured()) {
-    return "local-dev";
-  }
-  return null;
-}
-
-export function getAuthMode(): AuthMode {
-  if (isGoogleAuthConfigured()) return "google";
-  return "dev";
-}
-
-export async function getAuthProfile(): Promise<{ userId: string; email?: string; name?: string } | null> {
-  const google = await getGoogleSessionFromCookies();
-  if (google) {
-    return { userId: `google:${google.sub}`, email: google.email, name: google.name };
-  }
-  const userId = await getAuthUserId();
-  if (!userId) return null;
-  return { userId };
+  const profile = await getAuthProfile();
+  return profile?.id ?? null;
 }

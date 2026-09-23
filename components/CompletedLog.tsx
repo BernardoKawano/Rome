@@ -11,7 +11,7 @@ export function CompletedLog({ entries }: Props) {
     return (
       <section className="border border-neutral-200 bg-white px-4 py-6">
         <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">Registo de conclusões</h2>
-        <p className="mt-3 text-sm text-neutral-400">Ainda não há entradas. Ao mover para Feito, a data fica registada aqui.</p>
+        <p className="mt-3 text-sm text-neutral-400">Ainda não há entradas. Ao mover para Realizado, a data fica registada aqui.</p>
       </section>
     );
   }

@@ -10,6 +10,8 @@ function board(cards: Record<string, { updatedAt: string }>): BoardState {
         id,
         title: id,
         subItems: [],
+        hoursSpent: 0,
+        movesNeedle: false,
         createdAt: meta.updatedAt,
         updatedAt: meta.updatedAt,
       },

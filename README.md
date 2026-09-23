@@ -1,38 +1,35 @@
-# Demandas — Kanban minimalista
+# Demandas — quadro dos talentos
 
-Next.js, TypeScript, Tailwind CSS v4. **Login com Google** e tabuleiro guardado no ficheiro `demandas-kanban.json` no **Google Drive** de cada utilizador (sem Clerk, sem base de dados).
+Next.js, TypeScript, Tailwind CSS v4. Cada talento entra com e-mail e senha, preenche o quadro da empresa em que está e fecha a semana mostrando o que mexeu o ponteiro.
+
+A meta é **80% das horas** em trabalho que aumenta receita, reduz despesa ou economiza tempo. O resto conta como operacional.
 
 ## Como funciona
 
-1. Entra com Google → a app pede acesso ao Drive (só ficheiros que ela criar).
-2. Cria ou atualiza `demandas-kanban.json` na sua conta.
-3. Ao voltar (mesmo noutro PC), os dados vêm desse ficheiro.
-4. Cópia de segurança no browser (`localStorage`) se o Drive falhar temporariamente.
+1. O gestor entra e cria o talento: nome, e-mail, senha inicial e empresa.
+2. O talento usa três colunas: **A fazer**, **Em progresso**, **Realizado**.
+3. Em cada cartão regista horas e o tipo de impacto.
+4. O relatório da semana, do mês ou do sprint soma o que foi para Realizado.
+5. Recados e reuniões ficam na mesma tela.
+6. O gestor abre cada talento e vê essa mesma tela, deixa feedback e marca reuniões.
 
-## Configurar Google Cloud
+## Onde ficam os dados
 
-1. [Google Cloud Console](https://console.cloud.google.com/) → novo projeto.
-2. **APIs e serviços → Biblioteca** → ativar **Google Drive API**.
-3. **APIs e serviços → Credenciais → Criar credenciais → ID do cliente OAuth**:
-   - Tipo: **Aplicação Web**
-   - URIs de redirecionamento autorizados:
-     - `http://localhost:3000/api/auth/google/callback` (dev)
-     - `https://SEU-DOMINIO.vercel.app/api/auth/google/callback` (produção)
-4. **Ecrã de consentimento OAuth** → adicionar utilizadores de teste (modo teste) ou publicar a app.
-5. Copie **Client ID** e **Client Secret**.
+Com Supabase configurado, Auth e Postgres são a fonte. O papel (`gestor` ou `talento`) está na tabela `profiles`, não no metadata editável do utilizador. Aplique [`supabase/migrations/20260923180000_talent_panel.sql`](supabase/migrations/20260923180000_talent_panel.sql).
+
+Sem Supabase, em desenvolvimento, a app grava em `.data/app-store.json` (não vai para o git). Em produção na Vercel o Supabase é obrigatório: o disco da função não guarda dados.
 
 ## Variáveis de ambiente
 
 Copie `.env.example` para `.env.local`:
 
-| Variável | Descrição |
-|----------|-----------|
-| `GOOGLE_CLIENT_ID` | Client ID OAuth |
-| `GOOGLE_CLIENT_SECRET` | Client Secret |
-| `GOOGLE_REDIRECT_URI` | Callback (ex.: `http://localhost:3000/api/auth/google/callback`) |
-| `AUTH_SESSION_SECRET` | String aleatória longa (cookies de sessão) |
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (a chave antiga `NEXT_PUBLIC_SUPABASE_ANON_KEY` também é aceite)
+- `SUPABASE_SECRET_KEY` (só no servidor; cria contas)
+- `GESTOR_EMAIL` e `GESTOR_PASSWORD` — criam o primeiro gestor se ele ainda não existir
+- `AUTH_SESSION_SECRET` — cookie de sessão no modo local
 
-Remova variáveis antigas (`CLERK_*`, `APP_AUTH_*`, `KV_*`) se ainda existirem.
+Não grave senhas no repositório.
 
 ## Comandos
 
@@ -41,7 +38,7 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:3000 → **Entrar com Google**.
+Abra http://localhost:3000 e entre com o gestor. Crie um talento e entre com o e-mail dele.
 
 ```bash
 npm run test
@@ -51,9 +48,11 @@ npm run build
 ## Deploy na Vercel
 
 1. Push para Git e importar na Vercel.
-2. Environment Variables: as quatro variáveis acima (redirect URI com o domínio Vercel).
-3. No Google Cloud, adicione o redirect URI de produção.
+2. Environment Variables: as variáveis acima, com o projeto Supabase.
+3. Correr a migração SQL no projeto.
 4. Deploy.
+
+O login Google e o ficheiro `demandas-kanban.json` no Drive deixam de ser usados. Os módulos antigos continuam no repositório.
 
 ## Changelog
 

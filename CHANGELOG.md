@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.2 — 2026-09-23
+
+- As colunas do quadro têm altura limitada e o scroll fica dentro de cada uma.
+- Embaixo do nome, as frases de escala, intuitividade, autonomia, regra de negócio e humildade trocam a cada 10 segundos.
+
+## 0.3.1 — 2026-09-23
+
+- O gestor edita o quadro do talento: arrastar, alterar campos e excluir cartão.
+- Excluir cartão também sai do registo de conclusões.
+
+## 0.3.0 — 2026-09-23
+
+- Login por e-mail e senha, com papéis de gestor e talento. O Google Drive deixa de ser a fonte dos quadros.
+- Cada talento tem empresa, quadro (A fazer / Em progresso / Realizado) e cartões com horas e impacto (receita, despesa ou tempo).
+- Relatório da semana, do mês ou do sprint, com meta de 80% das horas no ponteiro.
+- Recados e reuniões. O gestor abre a mesma tela do talento em `/gestor/talento/[id]`.
+- Supabase (Auth + Postgres, com RLS). Sem as variáveis, o desenvolvimento grava em `.data/app-store.json`.
+
 ## 0.2.0 — 2026-05-15
 
 - Removidos Clerk, Vercel KV e login por utilizador/senha.

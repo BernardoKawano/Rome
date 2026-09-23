@@ -1,90 +1,42 @@
 import { NextResponse } from "next/server";
-import { getAuthUserId } from "@/lib/auth";
-import { readBoardForSession, writeBoardForSession } from "@/lib/board-storage";
+import { canEditBoard } from "@/lib/access";
 import { assertBoardIntegrity } from "@/lib/board-operations";
-import { createDefaultBoard, safeParseBoardState } from "@/lib/board-schema";
-import { GoogleReauthRequiredError } from "@/lib/google-oauth";
+import { safeParseBoardState, withCurrentVersion } from "@/lib/board-schema";
+import { jsonError, readJson, requireViewer } from "@/lib/guard";
+import { getStore } from "@/lib/store";
+
 export async function GET() {
-  const userId = await getAuthUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
+  const auth = await requireViewer();
+  if (auth.error) return auth.error;
 
   try {
-    const { data: raw } = await readBoardForSession();
-    if (raw == null) {
-      const initial = createDefaultBoard();
-      try {
-        await writeBoardForSession(initial);
-      } catch (writeErr) {
-        console.error("[board] falha ao criar ficheiro no Drive:", writeErr);
-      }
-      return NextResponse.json(initial);
-    }
-
-    const parsed = safeParseBoardState(raw);
-    if (!parsed.success) {
-      const fresh = createDefaultBoard();
-      await writeBoardForSession(fresh);
-      return NextResponse.json(fresh);
-    }
-
-    try {
-      assertBoardIntegrity(parsed.data);
-    } catch {
-      const fresh = createDefaultBoard();
-      await writeBoardForSession(fresh);
-      return NextResponse.json(fresh);
-    }
-
-    return NextResponse.json(parsed.data);
-  } catch (e) {
-    if (e instanceof GoogleReauthRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: 401 });
-    }
-    const message = e instanceof Error ? e.message : "Erro ao ler tabuleiro";
-    console.error("[board] GET:", message);
-    const initial = createDefaultBoard();
-    return NextResponse.json(initial, {
-      headers: { "X-Board-Warning": message.slice(0, 200) },
-    });
+    const board = await getStore().getBoard(auth.viewer.id);
+    return NextResponse.json(board);
+  } catch (error) {
+    return jsonError(error);
   }
 }
 
 export async function PUT(req: Request) {
-  const userId = await getAuthUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  const auth = await requireViewer();
+  if (auth.error) return auth.error;
+  if (!canEditBoard(auth.viewer, auth.viewer.id)) {
+    return NextResponse.json({ error: "O quadro do gestor é só de leitura" }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
-  }
-
-  const parsed = safeParseBoardState(body);
+  const parsed = safeParseBoardState(await readJson(req));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   try {
     assertBoardIntegrity(parsed.data);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Estado inválido";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-
-  try {
-    await writeBoardForSession(parsed.data);
+    await getStore().saveBoard(auth.viewer.id, withCurrentVersion(parsed.data));
     return NextResponse.json({ ok: true });
-  } catch (e) {
-    if (e instanceof GoogleReauthRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: 401 });
+  } catch (error) {
+    if (error instanceof Error && /Cartão/.test(error.message)) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    const message = e instanceof Error ? e.message : "Erro ao guardar";
-    console.error("[board] PUT:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return jsonError(error);
   }
 }

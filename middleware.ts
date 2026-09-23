@@ -1,38 +1,40 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { isGoogleAuthConfigured } from "@/lib/google-config";
-import { GOOGLE_SESSION_COOKIE } from "@/lib/google-session";
+import { NextResponse, type NextRequest } from "next/server";
+import { APP_SESSION_COOKIE } from "@/lib/session-cookie";
 import { verifySessionPayload } from "@/lib/session-crypto";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { copySupabaseCookies, updateSupabaseSession } from "@/lib/supabase/middleware";
 
-const PUBLIC_PREFIXES = ["/login", "/api/auth/google", "/api/auth/google/callback"];
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/logout"];
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+function deny(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  const login = new URL("/login", request.url);
+  login.searchParams.set("from", request.nextUrl.pathname);
+  return NextResponse.redirect(login);
 }
 
 export async function middleware(request: NextRequest) {
-  if (isPublicPath(request.nextUrl.pathname)) {
-    return NextResponse.next();
+  const pathname = request.nextUrl.pathname;
+
+  if (isSupabaseConfigured()) {
+    const { supabaseResponse, userId } = await updateSupabaseSession(request);
+    if (isPublicPath(pathname) || userId) return supabaseResponse;
+    const denied = deny(request);
+    copySupabaseCookies(supabaseResponse, denied);
+    return denied;
   }
 
-  if (!isGoogleAuthConfigured()) {
-    if (process.env.NODE_ENV === "development") {
-      return NextResponse.next();
-    }
-    const login = new URL("/login", request.url);
-    login.searchParams.set("error", "config");
-    return NextResponse.redirect(login);
-  }
+  if (isPublicPath(pathname)) return NextResponse.next();
 
-  const token = request.cookies.get(GOOGLE_SESSION_COOKIE)?.value;
+  const token = request.cookies.get(APP_SESSION_COOKIE)?.value;
   const session = token ? await verifySessionPayload(token) : null;
-  const wire = session as { accessToken?: string } | null;
-  if (!wire?.accessToken) {
-    const login = new URL("/login", request.url);
-    login.searchParams.set("from", request.nextUrl.pathname);
-    return NextResponse.redirect(login);
-  }
-
+  if (!session?.sub) return deny(request);
   return NextResponse.next();
 }
 
