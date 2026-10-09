@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { loginInputSchema } from "@/lib/api-input";
 import { setAppSession } from "@/lib/app-session";
 import { jsonError, readJson } from "@/lib/guard";
-import { loginWithPassword } from "@/lib/store/file-store";
 import { getStore } from "@/lib/store";
-import { configuredGestorEmail, isSupabaseConfigured } from "@/lib/supabase/env";
+import { loginWithPassword } from "@/lib/store/file-store";
+import {
+  configuredGestorEmail,
+  isFileStoreAllowed,
+  isSupabaseConfigured,
+} from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
@@ -33,6 +37,16 @@ export async function POST(req: Request) {
       }
       const profile = await getStore().getProfile(userId);
       return NextResponse.json({ role: profile?.role ?? "talento" });
+    }
+
+    if (!isFileStoreAllowed()) {
+      return NextResponse.json(
+        {
+          error:
+            "Em produção configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (o disco da Vercel não guarda dados).",
+        },
+        { status: 503 }
+      );
     }
 
     const profile = await loginWithPassword(email, password);

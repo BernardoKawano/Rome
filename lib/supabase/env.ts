@@ -18,6 +18,18 @@ export function isSupabaseConfigured(): boolean {
   return Boolean(supabaseUrl() && supabasePublishableKey());
 }
 
+/** Vercel/Lambda: disco da função é read-only — file-store (`.data`) não pode ser usado. */
+export function isEphemeralServer(): boolean {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+/** Persistência em ficheiro só em desenvolvimento local, nunca em produção serverless. */
+export function isFileStoreAllowed(): boolean {
+  if (isEphemeralServer()) return false;
+  if (process.env.NODE_ENV === "production") return false;
+  return true;
+}
+
 export function configuredGestorEmail(): string | null {
   const email = process.env.GESTOR_EMAIL?.trim().toLowerCase();
   return email || null;

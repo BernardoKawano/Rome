@@ -42,9 +42,9 @@ describe("file-store", () => {
     expect(await loginWithPassword("gestor@masterboard.com.br", "errada")).toBeNull();
 
     const talento = await createTalentAccount({
-      name: "Allan",
-      email: "allan@masterboard.com.br",
-      password: "senha-do-allan",
+      name: "Alan",
+      email: "alan@masterboard.com.br",
+      password: "senha-do-alan",
       company: "Casa do Caminhão",
     });
 
@@ -67,7 +67,7 @@ describe("file-store", () => {
     expect(summary.byKind.despesa).toBe(900);
 
     const talents = await listTalents();
-    expect(talents.map((item) => item.email)).toEqual(["allan@masterboard.com.br"]);
+    expect(talents.map((item) => item.email)).toEqual(["alan@masterboard.com.br"]);
 
     await addMessage({
       talentId: talento.id,
@@ -79,7 +79,7 @@ describe("file-store", () => {
       talentId: talento.id,
       title: "Feedback da semana",
       startsAt: "2026-09-25T18:00:00.000Z",
-      link: "https://meet.example/allan",
+      link: "https://meet.example/alan",
       notes: null,
     });
     const messages = await listMessages(talento.id);

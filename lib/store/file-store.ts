@@ -5,7 +5,7 @@ import { createDefaultBoard, safeParseBoardState, withCurrentVersion, type Board
 import { hashPassword, verifyPassword } from "@/lib/password";
 import type { AppMessage, Meeting, WeeklyReport } from "@/lib/records";
 import { StoreError } from "@/lib/store-error";
-import { configuredGestorEmail } from "@/lib/supabase/env";
+import { configuredGestorEmail, isFileStoreAllowed } from "@/lib/supabase/env";
 
 type StoredUser = Profile & {
   passwordSalt: string;
@@ -19,6 +19,15 @@ type AppData = {
   meetings: Meeting[];
   reports: WeeklyReport[];
 };
+
+function assertFileStoreAllowed(): void {
+  if (!isFileStoreAllowed()) {
+    throw new StoreError(
+      "Em produção configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (o disco da Vercel não guarda dados).",
+      503
+    );
+  }
+}
 
 function dataFile(): string {
   const dir = process.env.APP_DATA_DIR?.trim() || path.join(process.cwd(), ".data");
@@ -48,9 +57,21 @@ async function readUnlocked(): Promise<AppData> {
 }
 
 async function writeUnlocked(data: AppData): Promise<void> {
+  assertFileStoreAllowed();
   const file = dataFile();
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, JSON.stringify(data), "utf-8");
+  try {
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, JSON.stringify(data), "utf-8");
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ENOENT" || code === "EACCES" || code === "EROFS") {
+      throw new StoreError(
+        "Em produção configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (o disco da Vercel não guarda dados).",
+        503
+      );
+    }
+    throw error;
+  }
 }
 
 let queue: Promise<void> = Promise.resolve();
