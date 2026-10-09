@@ -33,6 +33,8 @@ type Props = {
   company: string | null;
   readOnly: boolean;
   viewerRole: Role;
+  /** Quadro pessoal do gestor: só demandas, sem horas, ponteiro, relatório nem recados. */
+  personal?: boolean;
 };
 
 function LogoutButton({ onBeforeLogout }: { onBeforeLogout: () => Promise<void> }) {
@@ -51,8 +53,8 @@ function LogoutButton({ onBeforeLogout }: { onBeforeLogout: () => Promise<void> 
   );
 }
 
-export function BoardPage({ talentId, talentName, talentEmail, company, readOnly, viewerRole }: Props) {
-  const viewingAsGestor = viewerRole === "gestor" || readOnly;
+export function BoardPage({ talentId, talentName, talentEmail, company, readOnly, viewerRole, personal = false }: Props) {
+  const viewingAsGestor = !personal && (viewerRole === "gestor" || readOnly);
   const [companyName, setCompanyName] = useState(company ?? "");
   const [board, setBoard] = useState<BoardState | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -331,6 +333,15 @@ export function BoardPage({ talentId, talentName, talentEmail, company, readOnly
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-12">
+      {personal ? (
+        <div className="flex flex-col gap-3 border border-neutral-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-neutral-700">As suas demandas pessoais.</p>
+          <Link href="/gestor" className="text-xs uppercase tracking-wide text-neutral-600 underline">
+            Voltar aos talentos
+          </Link>
+        </div>
+      ) : null}
+
       {viewingAsGestor ? (
         <div className="flex flex-col gap-3 border border-neutral-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-neutral-700">
@@ -346,12 +357,14 @@ export function BoardPage({ talentId, talentName, talentEmail, company, readOnly
       <header className="flex flex-col gap-6 border-b border-neutral-200 pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-medium tracking-tight text-neutral-950 sm:text-3xl">{talentName}</h1>
-          <p className="mt-1 text-xs uppercase tracking-wide text-neutral-400">{companyName || "Sem empresa"}</p>
+          {personal ? null : (
+            <p className="mt-1 text-xs uppercase tracking-wide text-neutral-400">{companyName || "Sem empresa"}</p>
+          )}
           <RotatingPrinciple />
           {saveLabel ? <p className="mt-2 text-[11px] uppercase tracking-wide text-neutral-400">{saveLabel}</p> : null}
         </div>
         <div className="flex flex-col items-stretch gap-4 sm:items-end">
-          <NeedleMeter summary={weekSummary} />
+          {personal ? null : <NeedleMeter summary={weekSummary} />}
           <div className="flex items-center justify-end gap-3">
             <span className="text-xs text-neutral-500">{talentEmail}</span>
             <LogoutButton onBeforeLogout={flushBoard} />
@@ -421,17 +434,22 @@ export function BoardPage({ talentId, talentName, talentEmail, company, readOnly
               toggleSubItem={toggleSubItem}
               removeSubItem={removeSubItem}
               removeCard={deleteCard}
+              hideHours={personal}
             />
           ))}
         </div>
       </DndContext>
 
-      <WeeklyReportPanel talentId={talentId} board={board} readOnly={viewingAsGestor} />
+      {personal ? null : (
+        <>
+          <WeeklyReportPanel talentId={talentId} board={board} readOnly={viewingAsGestor} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <MessagesPanel talentId={talentId} viewerRole={viewerRole} />
-        <MeetingsPanel talentId={talentId} viewerRole={viewerRole} />
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <MessagesPanel talentId={talentId} viewerRole={viewerRole} />
+            <MeetingsPanel talentId={talentId} viewerRole={viewerRole} />
+          </div>
+        </>
+      )}
 
       <CompletedLog entries={board.completedLog} />
     </div>

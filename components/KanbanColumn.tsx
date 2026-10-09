@@ -22,6 +22,7 @@ type Props = {
   removeSubItem: (cardId: string, subId: string) => void;
   removeCard: (cardId: string) => void;
   readOnly?: boolean;
+  hideHours?: boolean;
 };
 
 export function KanbanColumn({
@@ -35,6 +36,7 @@ export function KanbanColumn({
   removeSubItem,
   removeCard,
   readOnly = false,
+  hideHours = false,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: `col:${columnId}` });
   const ids = state.columns[columnId];
@@ -66,6 +68,7 @@ export function KanbanColumn({
                   onRemoveSub={(subId) => removeSubItem(id, subId)}
                   onRemove={() => removeCard(id)}
                   readOnly={readOnly}
+                  hideHours={hideHours}
                 />
               );
             })}

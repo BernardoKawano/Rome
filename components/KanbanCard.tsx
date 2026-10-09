@@ -14,6 +14,7 @@ type Props = {
   onRemoveSub: (subId: string) => void;
   onRemove: () => void;
   readOnly?: boolean;
+  hideHours?: boolean;
 };
 
 export function KanbanCard({
@@ -26,6 +27,7 @@ export function KanbanCard({
   onRemoveSub,
   onRemove,
   readOnly = false,
+  hideHours = false,
 }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
@@ -99,7 +101,7 @@ export function KanbanCard({
               ))}
             </div>
           ) : null}
-          {card.hoursSpent > 0 || card.movesNeedle ? (
+          {!hideHours && (card.hoursSpent > 0 || card.movesNeedle) ? (
             <p className="mt-1 text-[11px] uppercase tracking-wide text-neutral-500">
               {card.hoursSpent} h · {card.movesNeedle ? "Ponteiro" : "Operacional"}
             </p>
@@ -173,6 +175,7 @@ export function KanbanCard({
               />
             </label>
           </div>
+          {hideHours ? null : (
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="block text-[11px] font-medium uppercase tracking-wide text-neutral-500">
               Horas gastas
@@ -211,7 +214,8 @@ export function KanbanCard({
               </select>
             </label>
           </div>
-          {card.movesNeedle ? (
+          )}
+          {!hideHours && card.movesNeedle ? (
             <label className="block text-[11px] font-medium uppercase tracking-wide text-neutral-500">
               {card.needleKind === "tempo" ? "Horas economizadas" : "Valor em R$"}
               <input

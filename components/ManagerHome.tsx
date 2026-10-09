@@ -69,16 +69,24 @@ export function ManagerHome() {
           <h1 className="text-2xl font-medium tracking-tight text-neutral-950">Talentos</h1>
           <p className="mt-2 text-sm text-neutral-500">A semana de cada pessoa, contra a meta de 80% no ponteiro.</p>
         </div>
-        <button
-          type="button"
-          onClick={async () => {
-            await fetch("/api/auth/logout", { method: "POST" });
-            window.location.href = "/login";
-          }}
-          className="border border-neutral-300 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-neutral-700"
-        >
-          Sair
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/gestor/demandas"
+            className="border border-neutral-900 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-neutral-900"
+          >
+            Minhas demandas
+          </Link>
+          <button
+            type="button"
+            onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST" });
+              window.location.href = "/login";
+            }}
+            className="border border-neutral-300 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-neutral-700"
+          >
+            Sair
+          </button>
+        </div>
       </header>
 
       <form onSubmit={(event) => void createTalent(event)} className="grid gap-3 border border-neutral-200 bg-white p-4 sm:grid-cols-2">

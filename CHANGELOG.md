@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.4 — 2026-10-09
+
+- Gestor ganha a aba **Minhas demandas** (`/gestor/demandas`): quadro pessoal com as mesmas colunas, sem horas, ponteiro, relatório nem recados.
+
+## 0.3.3 — 2026-09-24
+
+- Em produção/Vercel o file-store (`.data`) deixa de tentar `mkdir` no disco read-only; o login devolve erro claro se o Supabase não estiver configurado.
+- Quadro antigo do Drive (`demandas-kanban.json`) importado para o talento Arthur no Supabase.
+- Talento Alan (Casa do Caminhão): nome e e-mail corrigidos de Allan → Alan (um L); senha redefinida.
+
 ## 0.3.2 — 2026-09-23
 
 - As colunas do quadro têm altura limitada e o scroll fica dentro de cada uma.
