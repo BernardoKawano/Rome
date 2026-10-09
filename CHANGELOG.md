@@ -3,6 +3,7 @@
 ## 0.3.4 — 2026-10-09
 
 - Gestor ganha a aba **Minhas demandas** (`/gestor/demandas`): quadro pessoal com as mesmas colunas, sem horas, ponteiro, relatório nem recados.
+- **Agenda** em Minhas demandas: calendário mensal para marcar compromissos (com hora e notas) e ver os prazos das demandas.
 
 ## 0.3.3 — 2026-09-24
 

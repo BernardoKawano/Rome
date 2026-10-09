@@ -1,5 +1,6 @@
 "use client";
 
+import { AgendaPanel } from "@/components/AgendaPanel";
 import { CompletedLog } from "@/components/CompletedLog";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { MeetingsPanel } from "@/components/MeetingsPanel";
@@ -440,7 +441,7 @@ export function BoardPage({ talentId, talentName, talentEmail, company, readOnly
         </div>
       </DndContext>
 
-      {personal ? null : (
+      {personal ? <AgendaPanel ownerId={talentId} board={board} /> : (
         <>
           <WeeklyReportPanel talentId={talentId} board={board} readOnly={viewingAsGestor} />
 

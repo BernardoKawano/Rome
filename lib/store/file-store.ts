@@ -249,6 +249,16 @@ export async function addMeeting(input: Omit<Meeting, "id" | "createdAt">): Prom
   return meeting;
 }
 
+export async function deleteMeeting(talentId: string, meetingId: string): Promise<boolean> {
+  let removed = false;
+  await update((data) => {
+    const before = data.meetings.length;
+    data.meetings = data.meetings.filter((meeting) => !(meeting.id === meetingId && meeting.talentId === talentId));
+    removed = data.meetings.length < before;
+  });
+  return removed;
+}
+
 export async function getReport(
   talentId: string,
   periodStart: string,

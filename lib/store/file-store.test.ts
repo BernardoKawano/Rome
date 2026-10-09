@@ -8,8 +8,10 @@ import {
   addMessage,
   addMeeting,
   createTalentAccount,
+  deleteMeeting,
   ensureGestorAccount,
   getBoard,
+  listMeetings,
   listMessages,
   listTalents,
   loginWithPassword,
@@ -75,7 +77,7 @@ describe("file-store", () => {
       authorRole: "talento",
       body: "Fechei a automação do pátio.",
     });
-    await addMeeting({
+    const meeting = await addMeeting({
       talentId: talento.id,
       title: "Feedback da semana",
       startsAt: "2026-09-25T18:00:00.000Z",
@@ -84,5 +86,10 @@ describe("file-store", () => {
     });
     const messages = await listMessages(talento.id);
     expect(messages[0]?.body).toBe("Fechei a automação do pátio.");
+
+    expect(await deleteMeeting("outro-talento", meeting.id)).toBe(false);
+    expect(await listMeetings(talento.id)).toHaveLength(1);
+    expect(await deleteMeeting(talento.id, meeting.id)).toBe(true);
+    expect(await listMeetings(talento.id)).toHaveLength(0);
   });
 });

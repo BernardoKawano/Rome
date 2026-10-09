@@ -273,6 +273,18 @@ export async function addMeeting(input: Omit<Meeting, "id" | "createdAt">): Prom
   };
 }
 
+export async function deleteMeeting(talentId: string, meetingId: string): Promise<boolean> {
+  const supabase = await userClient();
+  const { data, error } = await supabase
+    .from("meetings")
+    .delete()
+    .eq("id", meetingId)
+    .eq("talent_id", talentId)
+    .select("id");
+  if (error) throw new StoreError(error.message, 500);
+  return (data ?? []).length > 0;
+}
+
 export async function getReport(
   talentId: string,
   periodStart: string,

@@ -47,3 +47,24 @@ export async function POST(req: Request, context: Context) {
     return jsonError(error);
   }
 }
+
+export async function DELETE(req: Request, context: Context) {
+  const auth = await requireViewer();
+  if (auth.error) return auth.error;
+  if (!canCreateMeeting(auth.viewer)) {
+    return NextResponse.json({ error: "Só o gestor remove reuniões" }, { status: 403 });
+  }
+  const { id } = await context.params;
+  const meetingId = new URL(req.url).searchParams.get("meetingId");
+  if (!meetingId) {
+    return NextResponse.json({ error: "Informe a reunião" }, { status: 400 });
+  }
+
+  try {
+    const removed = await getStore().deleteMeeting(id, meetingId);
+    if (!removed) return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return jsonError(error);
+  }
+}
