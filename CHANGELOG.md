@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5 — 2026-10-15
+
+- Em Minhas demandas, um cartão pode ser marcado como POC: empresa, endereço, para quem foi enviada, o que deve ser feito e o acesso concedido. Senha não é guardada.
+
 ## 0.3.4 — 2026-10-09
 
 - Gestor ganha a aba **Minhas demandas** (`/gestor/demandas`): quadro pessoal com as mesmas colunas, sem horas, ponteiro, relatório nem recados.

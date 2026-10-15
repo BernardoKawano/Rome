@@ -17,6 +17,9 @@ describe("board-schema", () => {
     expect(c.subItems).toEqual([]);
     expect(c.hoursSpent).toBe(0);
     expect(c.movesNeedle).toBe(false);
+    expect(c.isPoc).toBe(false);
+    expect(c.pocRecipients).toEqual([]);
+    expect(c.pocAccess).toEqual([]);
     expect(c.createdAt).toBe(c.updatedAt);
   });
 });
@@ -96,6 +99,55 @@ describe("safeParseBoardState", () => {
     if (!parsed.success) return;
     expect(parsed.data.cards.c1.hoursSpent).toBe(0);
     expect(parsed.data.cards.c1.movesNeedle).toBe(false);
+    expect(parsed.data.cards.c1.isPoc).toBe(false);
+    expect(parsed.data.cards.c1.pocRecipients).toEqual([]);
+    expect(parsed.data.cards.c1.pocAccess).toEqual([]);
     expect(withCurrentVersion(parsed.data).version).toBe(2);
+  });
+
+  it("aceita POC com destinatário e acesso", () => {
+    const card = {
+      ...createCard({ title: "POC de pátio" }),
+      isPoc: true,
+      pocCompany: "Casa do Caminhão",
+      pocAddress: "Rua do Pátio, 10",
+      pocRecipients: [
+        { id: "r1", name: "Ana Lima", role: "Operações", sentAt: "2026-10-01T12:00:00.000Z" },
+      ],
+      pocAccess: [
+        {
+          id: "a1",
+          label: "Staging",
+          role: "leitura",
+          url: "https://staging.exemplo",
+          notes: "Painel de fretes",
+        },
+      ],
+    };
+    const parsed = safeParseBoardState({
+      ...createDefaultBoard(),
+      columns: { todo: [card.id], doing: [], done: [] },
+      cards: { [card.id]: card },
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.cards[card.id].pocCompany).toBe("Casa do Caminhão");
+    expect(parsed.data.cards[card.id].pocRecipients[0].name).toBe("Ana Lima");
+    expect(parsed.data.cards[card.id].pocAccess[0].label).toBe("Staging");
+    expect(parsed.data.cards[card.id].pocAccess[0].notes).toBe("Painel de fretes");
+  });
+
+  it("rejeita acesso com senha", () => {
+    const card = {
+      ...createCard({ title: "POC" }),
+      isPoc: true,
+      pocAccess: [{ id: "a1", label: "Staging", password: "segredo" }],
+    };
+    const parsed = safeParseBoardState({
+      ...createDefaultBoard(),
+      columns: { todo: [card.id], doing: [], done: [] },
+      cards: { [card.id]: card },
+    });
+    expect(parsed.success).toBe(false);
   });
 });

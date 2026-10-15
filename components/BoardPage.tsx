@@ -177,14 +177,15 @@ export function BoardPage({ talentId, talentName, talentEmail, company, readOnly
     return () => window.removeEventListener("pagehide", flush);
   }, [boardUrl, talentId]);
 
-  const patchCard = useCallback((id: string, patch: Partial<Card>) => {
+  const patchCard = useCallback((id: string, patch: Partial<Card> | ((card: Card) => Partial<Card>)) => {
     setBoard((current) => {
       if (!current) return current;
       const card = current.cards[id];
       if (!card) return current;
+      const next = typeof patch === "function" ? patch(card) : patch;
       return {
         ...current,
-        cards: { ...current.cards, [id]: { ...card, ...patch, updatedAt: new Date().toISOString() } },
+        cards: { ...current.cards, [id]: { ...card, ...next, updatedAt: new Date().toISOString() } },
       };
     });
   }, []);
@@ -436,6 +437,7 @@ export function BoardPage({ talentId, talentName, talentEmail, company, readOnly
               removeSubItem={removeSubItem}
               removeCard={deleteCard}
               hideHours={personal}
+              trackPoc={personal}
             />
           ))}
         </div>

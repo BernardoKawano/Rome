@@ -12,6 +12,27 @@ export const subItemSchema = z.object({
   done: z.boolean(),
 });
 
+/** Pessoa para quem a POC foi enviada. Sem credenciais. */
+export const pocRecipientSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1).max(120),
+    role: z.string().max(80).optional(),
+    sentAt: z.string().datetime().optional(),
+  })
+  .strict();
+
+/** Acesso concedido pela empresa. Descrição apenas: ambiente, papel, URL e o que foi liberado. */
+export const pocAccessSchema = z
+  .object({
+    id: z.string().min(1),
+    label: z.string().min(1).max(120),
+    role: z.string().max(80).optional(),
+    url: z.string().max(500).optional(),
+    notes: z.string().max(500).optional(),
+  })
+  .strict();
+
 export const cardSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(500),
@@ -28,6 +49,12 @@ export const cardSchema = z.object({
   impactAmount: z.number().min(0).max(1_000_000_000).optional(),
   /** Empresa no momento em que o cartão foi criado. Permanece se o talento mudar de empresa. */
   company: z.string().max(120).optional(),
+  /** Cartões antigos sem o campo não são POC. */
+  isPoc: z.boolean().default(false),
+  pocCompany: z.string().max(120).optional(),
+  pocAddress: z.string().max(300).optional(),
+  pocRecipients: z.array(pocRecipientSchema).max(20).default([]),
+  pocAccess: z.array(pocAccessSchema).max(20).default([]),
   completedAt: z.string().datetime().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -51,6 +78,8 @@ export const boardStateSchema = z.object({
 });
 
 export type SubItem = z.infer<typeof subItemSchema>;
+export type PocRecipient = z.infer<typeof pocRecipientSchema>;
+export type PocAccess = z.infer<typeof pocAccessSchema>;
 export type Card = z.infer<typeof cardSchema>;
 export type CompletedLogEntry = z.infer<typeof completedLogEntrySchema>;
 export type BoardState = z.infer<typeof boardStateSchema>;
@@ -101,6 +130,9 @@ export function createCard(input: {
     hoursSpent: 0,
     movesNeedle: false,
     company: company || undefined,
+    isPoc: false,
+    pocRecipients: [],
+    pocAccess: [],
     createdAt: now,
     updatedAt: now,
   };

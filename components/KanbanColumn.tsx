@@ -16,13 +16,14 @@ type Props = {
   state: BoardState;
   expandedId: string | null;
   setExpandedId: (id: string | null) => void;
-  patchCard: (id: string, patch: Partial<Card>) => void;
+  patchCard: (id: string, patch: Partial<Card> | ((card: Card) => Partial<Card>)) => void;
   addSubItem: (cardId: string, title: string) => void;
   toggleSubItem: (cardId: string, subId: string) => void;
   removeSubItem: (cardId: string, subId: string) => void;
   removeCard: (cardId: string) => void;
   readOnly?: boolean;
   hideHours?: boolean;
+  trackPoc?: boolean;
 };
 
 export function KanbanColumn({
@@ -37,6 +38,7 @@ export function KanbanColumn({
   removeCard,
   readOnly = false,
   hideHours = false,
+  trackPoc = false,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: `col:${columnId}` });
   const ids = state.columns[columnId];
@@ -69,6 +71,7 @@ export function KanbanColumn({
                   onRemove={() => removeCard(id)}
                   readOnly={readOnly}
                   hideHours={hideHours}
+                  trackPoc={trackPoc}
                 />
               );
             })}

@@ -1,6 +1,7 @@
 "use client";
 
-import type { Card, NeedleKind } from "@/lib/board-schema";
+import type { Card, NeedleKind, PocAccess, PocRecipient } from "@/lib/board-schema";
+import { newId } from "@/lib/board-schema";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -8,13 +9,15 @@ type Props = {
   card: Card;
   expanded: boolean;
   onToggleExpand: () => void;
-  onChange: (patch: Partial<Card>) => void;
+  onChange: (patch: Partial<Card> | ((card: Card) => Partial<Card>)) => void;
   onAddSubItem: (title: string) => void;
   onToggleSub: (subId: string) => void;
   onRemoveSub: (subId: string) => void;
   onRemove: () => void;
   readOnly?: boolean;
   hideHours?: boolean;
+  /** Quadro pessoal: o cartão pode ser marcado como POC. */
+  trackPoc?: boolean;
 };
 
 export function KanbanCard({
@@ -28,6 +31,7 @@ export function KanbanCard({
   onRemove,
   readOnly = false,
   hideHours = false,
+  trackPoc = false,
 }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
@@ -55,6 +59,18 @@ export function KanbanCard({
       const d = new Date(card.dueAt).getTime();
       return d < Date.now();
     })();
+
+  function updateRecipient(id: string, patch: Partial<PocRecipient>) {
+    onChange((current) => ({
+      pocRecipients: current.pocRecipients.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+    }));
+  }
+
+  function updateAccess(id: string, patch: Partial<PocAccess>) {
+    onChange((current) => ({
+      pocAccess: current.pocAccess.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+    }));
+  }
 
   return (
     <div ref={setNodeRef} style={style} className="border border-neutral-200 bg-white">
@@ -89,6 +105,22 @@ export function KanbanCard({
               Excluir
             </button>
           )}
+          {trackPoc && card.isPoc ? (
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              <span className="border border-neutral-900 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-900">
+                POC
+              </span>
+              {card.pocCompany ? (
+                <span className="text-[11px] text-neutral-600">{card.pocCompany}</span>
+              ) : null}
+              {card.pocRecipients.length > 0 ? (
+                <span className="text-[11px] text-neutral-500">
+                  Enviada a {card.pocRecipients.length}{" "}
+                  {card.pocRecipients.length === 1 ? "pessoa" : "pessoas"}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
           {card.tags && card.tags.length > 0 ? (
             <div className="mt-1 flex flex-wrap gap-1">
               {card.tags.map((t) => (
@@ -237,8 +269,246 @@ export function KanbanCard({
               />
             </label>
           ) : null}
+          {trackPoc ? (
+            <div className="space-y-3 border border-neutral-200 px-2 py-2">
+              <label className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-neutral-700">
+                <input
+                  type="checkbox"
+                  disabled={readOnly}
+                  checked={card.isPoc}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      onChange({ isPoc: true });
+                      return;
+                    }
+                    onChange({
+                      isPoc: false,
+                      pocCompany: undefined,
+                      pocAddress: undefined,
+                      pocRecipients: [],
+                      pocAccess: [],
+                    });
+                  }}
+                  className="h-3.5 w-3.5 rounded border-neutral-300"
+                />
+                Esta demanda é uma POC
+              </label>
+              {card.isPoc ? (
+                <div className="space-y-3">
+                  <label className="block text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                    Empresa
+                    <input
+                      disabled={readOnly}
+                      value={card.pocCompany ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value.trim() ? e.target.value.slice(0, 120) : undefined;
+                        onChange({ pocCompany: value });
+                      }}
+                      className="mt-1 w-full border-b border-neutral-200 bg-transparent py-1 text-sm text-neutral-900 outline-none focus:border-neutral-900"
+                    />
+                  </label>
+                  <label className="block text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                    Endereço
+                    <textarea
+                      disabled={readOnly}
+                      value={card.pocAddress ?? ""}
+                      rows={2}
+                      onChange={(e) => {
+                        const value = e.target.value.trim() ? e.target.value.slice(0, 300) : undefined;
+                        onChange({ pocAddress: value });
+                      }}
+                      className="mt-1 w-full resize-none border border-neutral-200 bg-neutral-50 px-2 py-2 text-sm text-neutral-800 outline-none focus:border-neutral-400"
+                    />
+                  </label>
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                      Para quem enviei
+                    </p>
+                    <ul className="mt-2 space-y-2">
+                      {card.pocRecipients.map((row) => (
+                        <li key={row.id} className="grid gap-2 border border-neutral-100 p-2 sm:grid-cols-3">
+                          <input
+                            disabled={readOnly}
+                            aria-label="Nome de quem recebeu"
+                            value={row.name}
+                            onChange={(e) => {
+                              const name = e.target.value.slice(0, 120).trim();
+                              if (!name) return;
+                              updateRecipient(row.id, { name: e.target.value.slice(0, 120) });
+                            }}
+                            className="border-b border-neutral-200 bg-transparent py-1 text-sm outline-none focus:border-neutral-900"
+                          />
+                          <input
+                            disabled={readOnly}
+                            aria-label="Função de quem recebeu"
+                            placeholder="Função"
+                            value={row.role ?? ""}
+                            onChange={(e) => {
+                              const role = e.target.value.slice(0, 80).trim();
+                              updateRecipient(row.id, { role: role ? e.target.value.slice(0, 80) : undefined });
+                            }}
+                            className="border-b border-neutral-200 bg-transparent py-1 text-sm outline-none focus:border-neutral-900"
+                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="date"
+                              disabled={readOnly}
+                              aria-label="Data de envio"
+                              value={row.sentAt ? row.sentAt.slice(0, 10) : ""}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                updateRecipient(row.id, {
+                                  sentAt: value ? new Date(`${value}T12:00:00.000Z`).toISOString() : undefined,
+                                });
+                              }}
+                              className="min-w-0 flex-1 border border-neutral-200 bg-white px-2 py-1 text-sm outline-none focus:border-neutral-400"
+                            />
+                            {readOnly ? null : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onChange((current) => ({
+                                    pocRecipients: current.pocRecipients.filter((item) => item.id !== row.id),
+                                  }))
+                                }
+                                className="text-xs text-neutral-400 hover:text-neutral-900"
+                              >
+                                remover
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    {readOnly || card.pocRecipients.length >= 20 ? null : (
+                      <form
+                        className="mt-2 flex gap-2"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const fd = new FormData(e.currentTarget);
+                          const name = String(fd.get("recipient") ?? "").trim().slice(0, 120);
+                          if (!name) return;
+                          onChange((current) => ({
+                            pocRecipients: [...current.pocRecipients, { id: newId(), name }],
+                          }));
+                          e.currentTarget.reset();
+                        }}
+                      >
+                        <input
+                          name="recipient"
+                          placeholder="Nome de quem recebeu"
+                          className="min-w-0 flex-1 border-b border-neutral-200 bg-transparent py-1 text-sm outline-none focus:border-neutral-900"
+                        />
+                        <button type="submit" className="text-xs uppercase tracking-wide text-neutral-600 hover:text-neutral-900">
+                          Adicionar
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Acesso concedido</p>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      A senha não fica guardada aqui. Registe o ambiente, o papel, o endereço e o que foi liberado.
+                    </p>
+                    <ul className="mt-2 space-y-2">
+                      {card.pocAccess.map((row) => (
+                        <li key={row.id} className="space-y-2 border border-neutral-100 p-2">
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <input
+                              disabled={readOnly}
+                              aria-label="Ambiente do acesso"
+                              value={row.label}
+                              onChange={(e) => {
+                                const label = e.target.value.slice(0, 120).trim();
+                                if (!label) return;
+                                updateAccess(row.id, { label: e.target.value.slice(0, 120) });
+                              }}
+                              className="border-b border-neutral-200 bg-transparent py-1 text-sm outline-none focus:border-neutral-900"
+                            />
+                            <input
+                              disabled={readOnly}
+                              aria-label="Papel do acesso"
+                              placeholder="Papel"
+                              value={row.role ?? ""}
+                              onChange={(e) => {
+                                const role = e.target.value.slice(0, 80).trim();
+                                updateAccess(row.id, { role: role ? e.target.value.slice(0, 80) : undefined });
+                              }}
+                              className="border-b border-neutral-200 bg-transparent py-1 text-sm outline-none focus:border-neutral-900"
+                            />
+                          </div>
+                          <input
+                            disabled={readOnly}
+                            aria-label="Endereço do acesso"
+                            placeholder="URL"
+                            value={row.url ?? ""}
+                            onChange={(e) => {
+                              const url = e.target.value.slice(0, 500).trim();
+                              updateAccess(row.id, { url: url ? e.target.value.slice(0, 500) : undefined });
+                            }}
+                            className="w-full border-b border-neutral-200 bg-transparent py-1 text-sm outline-none focus:border-neutral-900"
+                          />
+                          <textarea
+                            disabled={readOnly}
+                            aria-label="O que foi liberado"
+                            placeholder="O que foi liberado"
+                            rows={2}
+                            value={row.notes ?? ""}
+                            onChange={(e) => {
+                              const notes = e.target.value.slice(0, 500).trim();
+                              updateAccess(row.id, { notes: notes ? e.target.value.slice(0, 500) : undefined });
+                            }}
+                            className="w-full resize-none border border-neutral-200 bg-neutral-50 px-2 py-2 text-sm outline-none focus:border-neutral-400"
+                          />
+                          {readOnly ? null : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onChange((current) => ({
+                                  pocAccess: current.pocAccess.filter((item) => item.id !== row.id),
+                                }))
+                              }
+                              className="text-xs text-neutral-400 hover:text-neutral-900"
+                            >
+                              remover
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    {readOnly || card.pocAccess.length >= 20 ? null : (
+                      <form
+                        className="mt-2 flex gap-2"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const fd = new FormData(e.currentTarget);
+                          const label = String(fd.get("access") ?? "").trim().slice(0, 120);
+                          if (!label) return;
+                          onChange((current) => ({
+                            pocAccess: [...current.pocAccess, { id: newId(), label }],
+                          }));
+                          e.currentTarget.reset();
+                        }}
+                      >
+                        <input
+                          name="access"
+                          placeholder="Ambiente, por exemplo staging"
+                          className="min-w-0 flex-1 border-b border-neutral-200 bg-transparent py-1 text-sm outline-none focus:border-neutral-900"
+                        />
+                        <button type="submit" className="text-xs uppercase tracking-wide text-neutral-600 hover:text-neutral-900">
+                          Adicionar
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Sub-itens</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+              {trackPoc && card.isPoc ? "O que deve ser feito" : "Sub-itens"}
+            </p>
             <ul className="mt-2 space-y-1">
               {card.subItems.map((s) => (
                 <li key={s.id} className="flex items-center gap-2 text-sm">
