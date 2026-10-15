@@ -29,7 +29,7 @@ export function writeLocalBoard(userId: string, board: BoardState): void {
 }
 
 export function boardHasContent(board: BoardState): boolean {
-  return Object.keys(board.cards).length > 0 || board.completedLog.length > 0;
+  return Object.keys(board.cards).length > 0 || board.completedLog.length > 0 || board.candidates.length > 0;
 }
 
 function boardRevision(board: BoardState): number {
@@ -40,6 +40,10 @@ function boardRevision(board: BoardState): number {
   }
   for (const entry of board.completedLog) {
     const t = Date.parse(entry.completedAt);
+    if (!Number.isNaN(t) && t > max) max = t;
+  }
+  for (const candidate of board.candidates) {
+    const t = Date.parse(candidate.updatedAt);
     if (!Number.isNaN(t) && t > max) max = t;
   }
   return max;

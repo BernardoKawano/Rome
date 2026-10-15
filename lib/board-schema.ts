@@ -66,6 +66,20 @@ export const completedLogEntrySchema = z.object({
   completedAt: z.string().datetime(),
 });
 
+/** Pessoa em entrevista. Notas de 0 a 10; null enquanto ainda não foram dadas. */
+export const candidateSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1).max(120),
+    address: z.string().max(300),
+    culturalScore: z.number().min(0).max(10).nullable(),
+    technicalScore: z.number().min(0).max(10).nullable(),
+    /** Texto livre: POCs atribuídas a esta pessoa. Registos antigos ficam vazios. */
+    pocs: z.string().max(5000).default(""),
+    updatedAt: z.string().datetime(),
+  })
+  .strict();
+
 export const boardStateSchema = z.object({
   version: z.union([z.literal(1), z.literal(2)]),
   columns: z.object({
@@ -75,6 +89,8 @@ export const boardStateSchema = z.object({
   }),
   cards: z.record(z.string(), cardSchema),
   completedLog: z.array(completedLogEntrySchema).max(500),
+  /** Quadros antigos sem o campo não têm entrevistas. */
+  candidates: z.array(candidateSchema).max(200).default([]),
 });
 
 export type SubItem = z.infer<typeof subItemSchema>;
@@ -82,6 +98,7 @@ export type PocRecipient = z.infer<typeof pocRecipientSchema>;
 export type PocAccess = z.infer<typeof pocAccessSchema>;
 export type Card = z.infer<typeof cardSchema>;
 export type CompletedLogEntry = z.infer<typeof completedLogEntrySchema>;
+export type Candidate = z.infer<typeof candidateSchema>;
 export type BoardState = z.infer<typeof boardStateSchema>;
 
 function newId(): string {
@@ -94,6 +111,7 @@ export function createDefaultBoard(): BoardState {
     columns: { todo: [], doing: [], done: [] },
     cards: {},
     completedLog: [],
+    candidates: [],
   };
 }
 

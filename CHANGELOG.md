@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.7 — 2026-10-15
+
+- Em cada pessoa de Entrevistas, um texto livre para as POCs atribuídas. Quem já estava registado abre com esse texto vazio.
+
+## 0.3.6 — 2026-10-15
+
+- Em Minhas demandas, a secção **Entrevistas** regista cada pessoa, o endereço onde mora e as notas cultural e técnica (0 a 10).
+
 ## 0.3.5 — 2026-10-15
 
 - Em Minhas demandas, um cartão pode ser marcado como POC: empresa, endereço, para quem foi enviada, o que deve ser feito e o acesso concedido. Senha não é guardada.

@@ -25,6 +25,7 @@ function board(cards: Record<string, { updatedAt: string }>): BoardState {
     columns: { todo: Object.keys(cards), doing: [], done: [] },
     cards: cardEntries,
     completedLog: [],
+    candidates: [],
   };
 }
 
@@ -45,5 +46,25 @@ describe("board-local-cache", () => {
     const server = board({});
     const local = board({ x: { updatedAt: "2026-05-01T00:00:00.000Z" } });
     expect(mergeBoardSources(server, local)).toBe(local);
+  });
+
+  it("entrevista recente conta como conteúdo e vence cartão mais antigo", () => {
+    const older = board({ a: { updatedAt: "2026-01-01T00:00:00.000Z" } });
+    const withInterview = {
+      ...board({}),
+      candidates: [
+        {
+          id: "p1",
+          name: "Ana Lima",
+          address: "Rua do Pátio, 10",
+          culturalScore: 8,
+          technicalScore: 7,
+          pocs: "",
+          updatedAt: "2026-06-01T00:00:00.000Z",
+        },
+      ],
+    };
+    expect(boardHasContent(withInterview)).toBe(true);
+    expect(pickNewerBoard(older, withInterview)).toBe(withInterview);
   });
 });

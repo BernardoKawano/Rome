@@ -1,6 +1,7 @@
 "use client";
 
 import { AgendaPanel } from "@/components/AgendaPanel";
+import { InterviewsPanel } from "@/components/InterviewsPanel";
 import { CompletedLog } from "@/components/CompletedLog";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { MeetingsPanel } from "@/components/MeetingsPanel";
@@ -443,7 +444,17 @@ export function BoardPage({ talentId, talentName, talentEmail, company, readOnly
         </div>
       </DndContext>
 
-      {personal ? <AgendaPanel ownerId={talentId} board={board} /> : (
+      {personal ? (
+        <>
+          <InterviewsPanel
+            candidates={board.candidates}
+            onChange={(candidates) => {
+              setBoard((current) => (current ? { ...current, candidates } : current));
+            }}
+          />
+          <AgendaPanel ownerId={talentId} board={board} />
+        </>
+      ) : (
         <>
           <WeeklyReportPanel talentId={talentId} board={board} readOnly={viewingAsGestor} />
 

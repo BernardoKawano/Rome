@@ -102,6 +102,7 @@ describe("safeParseBoardState", () => {
     expect(parsed.data.cards.c1.isPoc).toBe(false);
     expect(parsed.data.cards.c1.pocRecipients).toEqual([]);
     expect(parsed.data.cards.c1.pocAccess).toEqual([]);
+    expect(parsed.data.candidates).toEqual([]);
     expect(withCurrentVersion(parsed.data).version).toBe(2);
   });
 
@@ -147,6 +148,65 @@ describe("safeParseBoardState", () => {
       ...createDefaultBoard(),
       columns: { todo: [card.id], doing: [], done: [] },
       cards: { [card.id]: card },
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("aceita entrevista com endereço e notas", () => {
+    const parsed = safeParseBoardState({
+      ...createDefaultBoard(),
+      candidates: [
+        {
+          id: "p1",
+          name: "Ana Lima",
+          address: "Rua do Pátio, 10",
+          culturalScore: 8,
+          technicalScore: 7.5,
+          updatedAt: "2026-10-15T12:00:00.000Z",
+        },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.candidates[0].address).toBe("Rua do Pátio, 10");
+    expect(parsed.data.candidates[0].culturalScore).toBe(8);
+    expect(parsed.data.candidates[0].technicalScore).toBe(7.5);
+    expect(parsed.data.candidates[0].pocs).toBe("");
+  });
+
+  it("guarda o texto livre das POCs da pessoa", () => {
+    const parsed = safeParseBoardState({
+      ...createDefaultBoard(),
+      candidates: [
+        {
+          id: "p1",
+          name: "Ana Lima",
+          address: "Rua do Pátio, 10",
+          culturalScore: 8,
+          technicalScore: 7,
+          pocs: "POC de pátio enviada em outubro. Acesso de leitura no staging.",
+          updatedAt: "2026-10-15T12:00:00.000Z",
+        },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.candidates[0].pocs).toContain("POC de pátio");
+  });
+
+  it("rejeita nota técnica acima de 10", () => {
+    const parsed = safeParseBoardState({
+      ...createDefaultBoard(),
+      candidates: [
+        {
+          id: "p1",
+          name: "Ana Lima",
+          address: "Rua do Pátio, 10",
+          culturalScore: 8,
+          technicalScore: 11,
+          updatedAt: "2026-10-15T12:00:00.000Z",
+        },
+      ],
     });
     expect(parsed.success).toBe(false);
   });
