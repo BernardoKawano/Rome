@@ -66,16 +66,22 @@ export const completedLogEntrySchema = z.object({
   completedAt: z.string().datetime(),
 });
 
+/** Coluna do quadro de entrevistas. Quem já estava registado fica em Lista. */
+export const candidateStageSchema = z.enum(["list", "approved", "rejected"]);
+
 /** Pessoa em entrevista. Notas de 0 a 10; null enquanto ainda não foram dadas. */
 export const candidateSchema = z
   .object({
     id: z.string().min(1),
     name: z.string().min(1).max(120),
     address: z.string().max(300),
+    /** Celular. Vazio nos registos anteriores a este campo. */
+    phone: z.string().max(40).default(""),
     culturalScore: z.number().min(0).max(10).nullable(),
     technicalScore: z.number().min(0).max(10).nullable(),
     /** Texto livre: POCs atribuídas a esta pessoa. Registos antigos ficam vazios. */
     pocs: z.string().max(5000).default(""),
+    stage: candidateStageSchema.default("list"),
     updatedAt: z.string().datetime(),
   })
   .strict();
@@ -98,6 +104,7 @@ export type PocRecipient = z.infer<typeof pocRecipientSchema>;
 export type PocAccess = z.infer<typeof pocAccessSchema>;
 export type Card = z.infer<typeof cardSchema>;
 export type CompletedLogEntry = z.infer<typeof completedLogEntrySchema>;
+export type CandidateStage = z.infer<typeof candidateStageSchema>;
 export type Candidate = z.infer<typeof candidateSchema>;
 export type BoardState = z.infer<typeof boardStateSchema>;
 

@@ -60,6 +60,8 @@ describe("board-local-cache", () => {
           culturalScore: 8,
           technicalScore: 7,
           pocs: "",
+          phone: "",
+          stage: "list",
           updatedAt: "2026-06-01T00:00:00.000Z",
         },
       ],

@@ -172,6 +172,8 @@ describe("safeParseBoardState", () => {
     expect(parsed.data.candidates[0].culturalScore).toBe(8);
     expect(parsed.data.candidates[0].technicalScore).toBe(7.5);
     expect(parsed.data.candidates[0].pocs).toBe("");
+    expect(parsed.data.candidates[0].phone).toBe("");
+    expect(parsed.data.candidates[0].stage).toBe("list");
   });
 
   it("guarda o texto livre das POCs da pessoa", () => {
@@ -192,6 +194,47 @@ describe("safeParseBoardState", () => {
     expect(parsed.success).toBe(true);
     if (!parsed.success) return;
     expect(parsed.data.candidates[0].pocs).toContain("POC de pátio");
+  });
+
+  it("guarda celular e coluna da entrevista", () => {
+    const parsed = safeParseBoardState({
+      ...createDefaultBoard(),
+      candidates: [
+        {
+          id: "p1",
+          name: "Ana Lima",
+          address: "Rua do Pátio, 10",
+          phone: "(11) 98888-1234",
+          culturalScore: 8,
+          technicalScore: 7,
+          pocs: "",
+          stage: "approved",
+          updatedAt: "2026-10-15T12:00:00.000Z",
+        },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.candidates[0].phone).toBe("(11) 98888-1234");
+    expect(parsed.data.candidates[0].stage).toBe("approved");
+  });
+
+  it("rejeita coluna de entrevista desconhecida", () => {
+    const parsed = safeParseBoardState({
+      ...createDefaultBoard(),
+      candidates: [
+        {
+          id: "p1",
+          name: "Ana Lima",
+          address: "Rua do Pátio, 10",
+          culturalScore: null,
+          technicalScore: null,
+          stage: "talvez",
+          updatedAt: "2026-10-15T12:00:00.000Z",
+        },
+      ],
+    });
+    expect(parsed.success).toBe(false);
   });
 
   it("rejeita nota técnica acima de 10", () => {

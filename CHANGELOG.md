@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.8 — 2026-10-15
+
+- Entrevistas passam a cartões em três colunas: Lista, Aprovados e Recusados. Cada pessoa ganha celular, e a pesquisa encontra por nome, número, endereço ou POC. Quem já estava registado abre em Lista, sem celular.
+
 ## 0.3.7 — 2026-10-15
 
 - Em cada pessoa de Entrevistas, um texto livre para as POCs atribuídas. Quem já estava registado abre com esse texto vazio.
